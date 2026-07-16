@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ppl-entretien-v1';
+const CACHE_NAME = 'ppl-entretien-v2';
 const ASSETS = [
   './index.html',
   './manifest.json',

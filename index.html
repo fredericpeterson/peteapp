@@ -212,6 +212,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="tip"><div class="tdot" style="background:var(--green)"></div>Intensité abaissée (RPE 7-8, soit 2-3 reps en réserve) : plus de marge, moins de fatigue accumulée d'une séance à l'autre.</div>
     <div class="tip"><div class="tdot" style="background:var(--green)"></div>Double progression toujours active mais optionnelle : utile si tu veux consolider tes charges actuelles, pas obligatoire pour progresser.</div>
   </div>
+  <div class="div"></div>
+  <div class="secl">Sauvegarde</div>
+  <div class="tb" style="display:flex;flex-direction:column;gap:8px;">
+    <div class="tip" style="margin-bottom:2px;"><div class="tdot" style="background:#f59e0b"></div>Tes données ne sont enregistrées que sur cet appareil. Exporte un fichier de sauvegarde régulièrement, surtout avant de changer de téléphone.</div>
+    <div style="display:flex;gap:8px;">
+      <button class="tbtn" style="flex:1;padding:10px;font-size:12px;" onclick="exportBackup()">⬇ Exporter mes données</button>
+      <button class="tbtn" style="flex:1;padding:10px;font-size:12px;" onclick="document.getElementById('importFile').click()">⬆ Restaurer</button>
+    </div>
+    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importBackup(this.files[0])">
+    <div id="backupMsg" style="font-size:11px;color:var(--green);min-height:14px;"></div>
+  </div>
 </div>
 
 <div id="rest-timer" class="rest-timer">
@@ -606,6 +617,49 @@ function addTime(s){ timerRem=Math.min(timerRem+s,timerTotal+120); }
 function ar(t){t.style.height='auto';t.style.height=t.scrollHeight+'px';}
 [0,1,2].forEach(d=>{buildHeaders(d);buildExList(d);refreshDay(d);});
 updateWkLabel();
+
+function exportBackup(){
+  const backup = {
+    app: 'PPL Entretien · Smart Rabbit Fitness',
+    exportedAt: new Date().toISOString(),
+    data: {
+      ppl_v4: localStorage.getItem('ppl_v4'),
+      ppl_v4_week: localStorage.getItem('ppl_v4_week')
+    }
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const date = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `ppl-entretien-sauvegarde-${date}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const msg = document.getElementById('backupMsg');
+  if (msg) { msg.textContent = '✓ Fichier téléchargé'; setTimeout(()=>msg.textContent='', 3000); }
+}
+
+function importBackup(file){
+  const msg = document.getElementById('backupMsg');
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const backup = JSON.parse(e.target.result);
+      if (!backup.data || !backup.data.ppl_v4) throw new Error('format invalide');
+      if (!confirm('Restaurer cette sauvegarde va remplacer tes données actuelles sur cet appareil. Continuer ?')) return;
+      localStorage.setItem('ppl_v4', backup.data.ppl_v4);
+      if (backup.data.ppl_v4_week) localStorage.setItem('ppl_v4_week', backup.data.ppl_v4_week);
+      if (msg) msg.textContent = '✓ Restauré — rechargement...';
+      setTimeout(() => location.reload(), 800);
+    } catch (err) {
+      if (msg) { msg.style.color = '#f87171'; msg.textContent = '✗ Fichier invalide ou corrompu'; setTimeout(()=>{msg.textContent='';msg.style.color='var(--green)';}, 3000); }
+    }
+  };
+  reader.readAsText(file);
+}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
