@@ -22,6 +22,7 @@
   --push:#f59e0b;--pull:#3ecf8e;--legs:#4f9cf9;
   --green:#4ade80;--gbg:rgba(74,222,128,0.1);--gborder:rgba(74,222,128,0.3);
   --indigo:#a5b4fc;--indigobg:rgba(99,102,241,.1);--indigoborder:rgba(99,102,241,.25);
+  --cardio:#fb7185;
   --r:12px;--rs:8px;
 }
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:100px;}
@@ -33,6 +34,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .nb[data-d="1"].active .dot{background:rgba(62,207,142,.15);color:var(--pull);}
 .nb[data-d="2"].active .dot{background:rgba(79,156,249,.15);color:var(--legs);}
 .nb[data-d="3"].active .dot{background:rgba(240,237,232,.08);color:var(--text);}
+.nb[data-d="4"].active .dot{background:rgba(251,113,133,.15);color:var(--cardio);}
 .page{display:none;padding:0 16px;}.page.active{display:block;}
 .ph{padding:52px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px;}
 .psup{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;font-family:'DM Mono',monospace;display:flex;justify-content:space-between;align-items:center;}
@@ -42,6 +44,30 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .badge-push{background:rgba(245,158,11,.12);color:var(--push);border:1px solid rgba(245,158,11,.25);}
 .badge-pull{background:rgba(62,207,142,.12);color:var(--pull);border:1px solid rgba(62,207,142,.25);}
 .badge-legs{background:rgba(79,156,249,.12);color:var(--legs);border:1px solid rgba(79,156,249,.25);}
+.badge-cardio{background:rgba(251,113,133,.12);color:var(--cardio);border:1px solid rgba(251,113,133,.25);}
+.cs{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px;transition:border-color .15s;}
+.cs.done{border-color:rgba(251,113,133,.35);background:rgba(251,113,133,.06);}
+.csh{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.csd{font-size:9px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);font-family:'DM Mono',monospace;}
+.csug{font-size:11px;color:var(--text3);margin-top:2px;}
+.ccheck{width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:none;color:var(--text3);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.ccheck.on{background:var(--cardio);border-color:var(--cardio);color:#1a0a0c;}
+.crow{display:flex;gap:8px;}
+.csel,.cinp{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:8px 10px;font-size:12px;color:var(--text);font-family:'DM Sans',sans-serif;outline:none;flex:1;}
+.cinp{max-width:90px;font-family:'DM Mono',monospace;}
+.csel:focus,.cinp:focus{border-color:var(--border2);}
+.wgt-badge{display:inline-block;padding:6px 12px;border-radius:20px;font-size:11px;font-family:'DM Mono',monospace;margin-bottom:14px;}
+.wgt-ok{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.25);}
+.wgt-slow{background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.25);}
+.wgt-fast{background:rgba(251,113,133,.12);color:var(--cardio);border:1px solid rgba(251,113,133,.25);}
+.wgt-none{background:rgba(240,237,232,.06);color:var(--text3);border:1px solid var(--border);}
+.we{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);margin-bottom:6px;font-size:12px;}
+.wed{font-family:'DM Mono',monospace;color:var(--text3);font-size:10px;}
+.wew{font-weight:600;color:var(--text);font-family:'DM Mono',monospace;}
+.wedt{font-size:10px;font-family:'DM Mono',monospace;}
+.wedt.dn{color:var(--green);}
+.wedt.up{color:var(--cardio);}
+.wedel{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0 4px;}
 .deload-banner{background:var(--indigobg);border:1px solid var(--indigoborder);border-radius:var(--rs);padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--indigo);font-family:'DM Mono',monospace;display:flex;align-items:center;gap:8px;line-height:1.5;}
 .srow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
 .sc{background:var(--bg3);border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;}
@@ -189,6 +215,18 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="sc"><div class="sv">~65'</div><div class="sl">durée / séance</div></div>
   </div>
   <div class="div"></div>
+  <div class="secl">Suivi de poids</div>
+  <div class="tb" style="margin-bottom:14px">
+    <div class="tip"><div class="tdot" style="background:var(--cardio)"></div>Pesée hebdo, mêmes conditions (à jeun, au réveil). Cible : -0,4 à -0,5 kg/semaine.</div>
+  </div>
+  <div class="crow" style="margin-bottom:10px">
+    <input class="cinp" style="max-width:90px" type="number" step="0.1" id="wgtInput" placeholder="kg">
+    <input class="csel" style="flex:0 0 150px" type="date" id="wgtDate">
+    <button class="rbtn" style="flex:1;padding:0 10px" onclick="addWeight()">+ Ajouter</button>
+  </div>
+  <div id="wgtTrend"></div>
+  <div id="wgtList"></div>
+  <div class="div"></div>
   <div class="secl">Volume hebdomadaire</div>
   <div id="vlist"></div>
   <div class="div"></div>
@@ -212,17 +250,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <div class="tip"><div class="tdot" style="background:var(--green)"></div>Intensité abaissée (RPE 7-8, soit 2-3 reps en réserve) : plus de marge, moins de fatigue accumulée d'une séance à l'autre.</div>
     <div class="tip"><div class="tdot" style="background:var(--green)"></div>Double progression toujours active mais optionnelle : utile si tu veux consolider tes charges actuelles, pas obligatoire pour progresser.</div>
   </div>
-  <div class="div"></div>
-  <div class="secl">Sauvegarde</div>
-  <div class="tb" style="display:flex;flex-direction:column;gap:8px;">
-    <div class="tip" style="margin-bottom:2px;"><div class="tdot" style="background:#f59e0b"></div>Tes données ne sont enregistrées que sur cet appareil. Exporte un fichier de sauvegarde régulièrement, surtout avant de changer de téléphone.</div>
-    <div style="display:flex;gap:8px;">
-      <button class="tbtn" style="flex:1;padding:10px;font-size:12px;" onclick="exportBackup()">⬇ Exporter mes données</button>
-      <button class="tbtn" style="flex:1;padding:10px;font-size:12px;" onclick="document.getElementById('importFile').click()">⬆ Restaurer</button>
-    </div>
-    <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importBackup(this.files[0])">
-    <div id="backupMsg" style="font-size:11px;color:var(--green);min-height:14px;"></div>
+</div>
+
+<div class="page" id="p4">
+  <div class="ph"><div class="psup">Mar · Jeu · Weekend<span class="saved" id="svc">✓ sauvegardé</span></div><div class="ptitle"><strong>Cardio</strong> — LISS · déficit calorique</div></div>
+  <div id="badgec"><span class="session-badge badge-cardio">♥ Récup active · zone où tu peux encore parler</span></div>
+  <div class="srow">
+    <div class="sc"><div class="sv" id="cdone">0</div><div class="sl">séances / 3</div></div>
+    <div class="sc"><div class="sv" id="cmin">0</div><div class="sl">minutes total</div></div>
+    <div class="sc"><div class="sv" id="cpct">0%</div><div class="sl">objectif sem.</div></div>
   </div>
+  <div class="pt"><div class="pf" id="cbar" style="background:var(--cardio)"></div></div>
+  <div id="cardiolist"></div>
+  <div class="div"></div>
+  <div class="secl">Repères</div>
+  <div class="tb">
+    <div class="tip"><div class="tdot" style="background:var(--cardio)"></div><strong style="color:var(--text)">LISS</strong> — 25-35 min, intensité modérée (tu peux encore parler). Vélo, marche inclinée, rameur, natation.</div>
+    <div class="tip"><div class="tdot" style="background:var(--cardio)"></div>Place-le de préférence les jours de repos (mardi/jeudi/weekend) pour ne pas cannibaliser la récup PPL.</div>
+    <div class="tip"><div class="tdot" style="background:var(--cardio)"></div>Évite le HIIT en période de déficit + muscu 3x/sem — même filière de récup que tes séances de force.</div>
+  </div>
+  <button class="rbtn" onclick="resetCardio()">↺ Réinitialiser la semaine</button>
 </div>
 
 <div id="rest-timer" class="rest-timer">
@@ -241,6 +288,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <button class="nb active" data-d="0" onclick="goTo(0)"><div class="dot">PSH</div>Push</button>
   <button class="nb" data-d="1" onclick="goTo(1)"><div class="dot">PLL</div>Pull</button>
   <button class="nb" data-d="2" onclick="goTo(2)"><div class="dot">LEG</div>Legs</button>
+  <button class="nb" data-d="4" onclick="goTo(4)"><div class="dot">♥</div>Cardio</button>
   <button class="nb" data-d="3" onclick="goTo(3)"><div class="dot">RÉC</div>Récap</button>
 </nav>
 
@@ -283,14 +331,14 @@ const PROGRAM = [
   { key:'legs', label:'Legs', sublabel:'Quad · Ischio · Fessiers', groupes:[
     { tag:'Composés', cls:'tcomp', exos:[
       { name:'Leg Press 45°',               sub:'Quadriceps · Fessiers · Ischio-jambiers',         sets:5, reps:'8–10',     bw:75,  prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
-      { name:'Romanian Deadlift (Smith)',   sub:'Ischio-jambiers · Fessiers · Lombaires',          sets:4, reps:'10–12',    bw:37.5,  prog:2.5, rpe:7, tempo:'3·0·1', wu:true,  isNew:false },
+      { name:'Leg Curl assis machine',      sub:'Ischio-jambiers · Biceps fémoral · Isolation',    sets:4, reps:'10–12',    bw:25,  prog:1,   rpe:7, tempo:'3·0·1', wu:true,  isNew:true },
     ]},
     { tag:'Isolations', cls:'tiso', exos:[
       { name:'Leg Extension machine',       sub:'Quadriceps · Isolation',                          sets:4, reps:'12–15',    bw:32.5,  prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
       { name:'Leg Curl couché machine',     sub:'Ischio-jambiers · Biceps fémoral · Isolation',   sets:4, reps:'12–15',    bw:27.5,  prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
     ]},
     { tag:'Fessiers + Core', cls:'tfes', exos:[
-      { name:'Hip Thrust machine / haltère',sub:'Fessiers · Grand fessier · Ischio-jambiers',     sets:4, reps:'10–12',    bw:47.5,  prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
+      { name:'Presse à cuisses pieds hauts/écartés', sub:'Fessiers · Ischio-jambiers · Quadriceps', sets:4, reps:'10–12',    bw:70,  prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:true },
       { name:'Ab Wheel / Relevé de jambes', sub:'Core complet · Droit abdominal · Transverse',    sets:4, reps:'12–15',    bw:0,   prog:0,   rpe:8, tempo:'2·0·3', wu:false, isNew:false },
     ]},
   ]},
@@ -347,7 +395,7 @@ function persist(){store.state=state;store.history=history;try{localStorage.setI
 let cur=0;
 function goTo(i){
   document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('active',j===i));
-  document.querySelectorAll('.nb').forEach((b,j)=>b.classList.toggle('active',j===i));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('active',+b.dataset.d===i));
   cur=i;window.scrollTo(0,0);if(i===3)updateRecap();
 }
 function flash(d){const el=document.getElementById('sv'+d);if(!el)return;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
@@ -493,7 +541,7 @@ function resetDay(d){
 function getMuscles(n){
   n=n.toLowerCase();
   if(n.includes('chest press'))return['Pectoraux','Épaules','Triceps'];
-  if(n.includes('leg press'))return['Quadriceps','Fessiers','Ischio-jambiers'];
+  if(n.includes('leg press')||n.includes('presse à cuisses'))return['Quadriceps','Fessiers','Ischio-jambiers'];
   if(n.includes('leg extension'))return['Quadriceps'];
   if(n.includes('leg curl'))return['Ischio-jambiers'];
   if(n.includes('romanian'))return['Ischio-jambiers','Fessiers'];
@@ -558,7 +606,7 @@ function changeWeek(delta){
 }
 
 function updateRecap(){
-  updateWkLabel();buildRecapCards();buildVol();
+  updateWkLabel();buildRecapCards();buildVol();buildWeight();
   [0,1,2].forEach(d=>{
     const exos=getExos(d),total=exos.reduce((a,e)=>a+e.sets,0);
     const done=state[d].reduce((a,s)=>a+(s.done?.filter(Boolean).length||0),0);
@@ -614,52 +662,130 @@ function skipTimer(){
 }
 function addTime(s){ timerRem=Math.min(timerRem+s,timerTotal+120); }
 
+// ─── SUIVI DE POIDS ─────────────────────────────────────────────────────────
+const WEIGHT_KEY='ppl_v4_weight';
+let weightLog;
+try{const r=localStorage.getItem(WEIGHT_KEY);weightLog=r?JSON.parse(r):[];}catch(e){weightLog=[];}
+if(!Array.isArray(weightLog))weightLog=[];
+function persistWeight(){try{localStorage.setItem(WEIGHT_KEY,JSON.stringify(weightLog));}catch(e){}}
+function addWeight(){
+  const wI=document.getElementById('wgtInput'),dI=document.getElementById('wgtDate');
+  const w=parseFloat(wI.value);
+  const d=dI.value||new Date().toISOString().slice(0,10);
+  if(!w||w<=0){wI.focus();return;}
+  weightLog=weightLog.filter(e=>e.date!==d);
+  weightLog.push({date:d,weight:w});
+  weightLog.sort((a,b)=>a.date.localeCompare(b.date));
+  persistWeight();wI.value='';buildWeight();
+}
+function delWeight(date){
+  weightLog=weightLog.filter(e=>e.date!==date);
+  persistWeight();buildWeight();
+}
+function buildWeight(){
+  const dI=document.getElementById('wgtDate');
+  if(dI&&!dI.value)dI.value=new Date().toISOString().slice(0,10);
+  const list=document.getElementById('wgtList');if(!list)return;
+  list.innerHTML='';
+  const sorted=[...weightLog].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,6);
+  sorted.forEach((e,idx)=>{
+    const prev=sorted[idx+1];
+    let deltaHtml='';
+    if(prev){
+      const delta=(e.weight-prev.weight);
+      const cls=delta<=0?'dn':'up';
+      deltaHtml=`<span class="wedt ${cls}">${delta>0?'+':''}${delta.toFixed(1)} kg</span>`;
+    }
+    const el=document.createElement('div');el.className='we';
+    const dd=new Date(e.date+'T00:00:00');
+    const dlabel=dd.toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'});
+    el.innerHTML=`<div><span class="wew">${e.weight.toFixed(1)} kg</span> <span class="wed">${dlabel}</span></div><div style="display:flex;align-items:center;gap:10px">${deltaHtml}<button class="wedel" onclick="delWeight('${e.date}')">✕</button></div>`;
+    list.appendChild(el);
+  });
+  const trendEl=document.getElementById('wgtTrend');if(!trendEl)return;
+  const asc=[...weightLog].sort((a,b)=>a.date.localeCompare(b.date));
+  if(asc.length<2){
+    trendEl.innerHTML=`<div class="wgt-badge wgt-none">Ajoute une 2ᵉ pesée dans ~1 semaine pour calculer la tendance</div>`;
+    return;
+  }
+  const recent=asc.slice(-4);
+  const first=recent[0],last=recent[recent.length-1];
+  const days=(new Date(last.date)-new Date(first.date))/86400000;
+  const weeks=Math.max(days/7,0.3);
+  const ratePerWeek=(last.weight-first.weight)/weeks;
+  let html;
+  if(ratePerWeek>-0.25){
+    html=`<div class="wgt-badge wgt-slow">⚠ Rythme lent (${ratePerWeek.toFixed(2)} kg/sem.) — réduis d'environ 100-150 kcal/j (~1 850 kcal)</div>`;
+  }else if(ratePerWeek<-0.65){
+    html=`<div class="wgt-badge wgt-fast">⚠ Rythme trop rapide (${ratePerWeek.toFixed(2)} kg/sem.) — remonte d'environ 100-150 kcal/j (~2 100 kcal) pour préserver le muscle</div>`;
+  }else{
+    html=`<div class="wgt-badge wgt-ok">✓ Rythme optimal (${ratePerWeek.toFixed(2)} kg/sem.) — garde 1 975 kcal/j</div>`;
+  }
+  trendEl.innerHTML=html;
+}
+
 function ar(t){t.style.height='auto';t.style.height=t.scrollHeight+'px';}
+
+// ─── CARDIO ─────────────────────────────────────────────────────────────────
+const CARDIO_DAYS=[
+  {label:'Mardi',suggestion:'Vélo / Rameur · 25-35 min'},
+  {label:'Jeudi',suggestion:'Vélo / Rameur · 25-35 min'},
+  {label:'Weekend',suggestion:'Marche / Natation · 25-35 min'},
+];
+const CARDIO_TYPES=['Marche rapide','Course à pied','Vélo','Rameur','Natation','Elliptique','Autre'];
+const CARDIO_KEY='ppl_v4_cardio';
+function makeCardio(){return CARDIO_DAYS.map(()=>({done:false,type:'',duration:''}));}
+let cardio;
+try{const r=localStorage.getItem(CARDIO_KEY);cardio=r?JSON.parse(r):null;if(!cardio||cardio.length!==CARDIO_DAYS.length)cardio=null;}catch(e){cardio=null;}
+if(!cardio)cardio=makeCardio();
+function persistCardio(){try{localStorage.setItem(CARDIO_KEY,JSON.stringify(cardio));}catch(e){}}
+function flashCardio(){const el=document.getElementById('svc');if(!el)return;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
+
+function toggleCardioDone(i){
+  cardio[i].done=!cardio[i].done;
+  persistCardio();buildCardio();flashCardio();
+}
+function setCardioField(i,field,val){
+  cardio[i][field]=val;persistCardio();
+  if(field==='duration')refreshCardioStats();
+}
+function resetCardio(){
+  if(!confirm('Réinitialiser la semaine cardio ?'))return;
+  cardio=makeCardio();persistCardio();buildCardio();flashCardio();
+}
+function buildCardio(){
+  const list=document.getElementById('cardiolist');if(!list)return;list.innerHTML='';
+  CARDIO_DAYS.forEach((cd,i)=>{
+    const s=cardio[i];
+    const el=document.createElement('div');el.className='cs'+(s.done?' done':'');
+    const opts=CARDIO_TYPES.map(t=>`<option value="${t}"${s.type===t?' selected':''}>${t}</option>`).join('');
+    el.innerHTML=`
+      <div class="csh">
+        <div><div class="csd">${cd.label}</div><div class="csug">${cd.suggestion}</div></div>
+        <button class="ccheck${s.done?' on':''}" onclick="toggleCardioDone(${i})">${s.done?'✓':''}</button>
+      </div>
+      <div class="crow">
+        <select class="csel" onchange="setCardioField(${i},'type',this.value)"><option value="">Type…</option>${opts}</select>
+        <input class="cinp" type="number" min="0" placeholder="min" value="${s.duration||''}" oninput="setCardioField(${i},'duration',this.value)">
+      </div>`;
+    list.appendChild(el);
+  });
+  refreshCardioStats();
+}
+function refreshCardioStats(){
+  const done=cardio.filter(s=>s.done).length;
+  const mins=cardio.reduce((a,s)=>a+(parseInt(s.duration)||0),0);
+  const pct=Math.round(done/CARDIO_DAYS.length*100);
+  document.getElementById('cdone').textContent=done;
+  document.getElementById('cmin').textContent=mins;
+  document.getElementById('cpct').textContent=pct+'%';
+  document.getElementById('cbar').style.width=pct+'%';
+}
+
 [0,1,2].forEach(d=>{buildHeaders(d);buildExList(d);refreshDay(d);});
+buildCardio();
+buildWeight();
 updateWkLabel();
-
-function exportBackup(){
-  const backup = {
-    app: 'PPL Entretien · Smart Rabbit Fitness',
-    exportedAt: new Date().toISOString(),
-    data: {
-      ppl_v4: localStorage.getItem('ppl_v4'),
-      ppl_v4_week: localStorage.getItem('ppl_v4_week')
-    }
-  };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], {type: 'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const date = new Date().toISOString().slice(0,10);
-  a.href = url;
-  a.download = `ppl-entretien-sauvegarde-${date}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  const msg = document.getElementById('backupMsg');
-  if (msg) { msg.textContent = '✓ Fichier téléchargé'; setTimeout(()=>msg.textContent='', 3000); }
-}
-
-function importBackup(file){
-  const msg = document.getElementById('backupMsg');
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (e) => {
-    try {
-      const backup = JSON.parse(e.target.result);
-      if (!backup.data || !backup.data.ppl_v4) throw new Error('format invalide');
-      if (!confirm('Restaurer cette sauvegarde va remplacer tes données actuelles sur cet appareil. Continuer ?')) return;
-      localStorage.setItem('ppl_v4', backup.data.ppl_v4);
-      if (backup.data.ppl_v4_week) localStorage.setItem('ppl_v4_week', backup.data.ppl_v4_week);
-      if (msg) msg.textContent = '✓ Restauré — rechargement...';
-      setTimeout(() => location.reload(), 800);
-    } catch (err) {
-      if (msg) { msg.style.color = '#f87171'; msg.textContent = '✗ Fichier invalide ou corrompu'; setTimeout(()=>{msg.textContent='';msg.style.color='var(--green)';}, 3000); }
-    }
-  };
-  reader.readAsText(file);
-}
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
