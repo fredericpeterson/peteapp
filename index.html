@@ -217,13 +217,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="div"></div>
   <div class="secl">Suivi de poids</div>
   <div class="tb" style="margin-bottom:14px">
-    <div class="tip"><div class="tdot" style="background:var(--cardio)"></div>Pesée hebdo, mêmes conditions (à jeun, au réveil). Cible : -0,4 à -0,5 kg/semaine.</div>
+    <div class="tip"><div class="tdot" style="background:var(--cardio)"></div>Pesée toutes les 2 semaines (balance précise au kg), mêmes conditions (à jeun, au réveil). Objectif : <strong style="color:var(--text)">~72,5-73 kg</strong> (12,2 kg de masse grasse → visée ~13% via impédancemètre).</div>
   </div>
   <div class="crow" style="margin-bottom:10px">
     <input class="cinp" style="max-width:90px" type="number" step="0.1" id="wgtInput" placeholder="kg">
     <input class="csel" style="flex:0 0 150px" type="date" id="wgtDate">
     <button class="rbtn" style="flex:1;padding:0 10px" onclick="addWeight()">+ Ajouter</button>
   </div>
+  <div id="wgtGoal"></div>
   <div id="wgtTrend"></div>
   <div id="wgtList"></div>
   <div class="div"></div>
@@ -614,6 +615,27 @@ function updateRecap(){
   });
 }
 
+// ─── SON DE FIN DE REPOS ────────────────────────────────────────────────────
+let audioCtx=null;
+function playBeep(){
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+    if(audioCtx.state==='suspended') audioCtx.resume();
+    const now=audioCtx.currentTime;
+    [0,0.18,0.36].forEach((offset,i)=>{
+      const osc=audioCtx.createOscillator();
+      const gain=audioCtx.createGain();
+      osc.type='sine';
+      osc.frequency.value = i<2 ? 880 : 1175;
+      gain.gain.setValueAtTime(0,now+offset);
+      gain.gain.linearRampToValueAtTime(0.35,now+offset+0.02);
+      gain.gain.linearRampToValueAtTime(0,now+offset+0.15);
+      osc.connect(gain); gain.connect(audioCtx.destination);
+      osc.start(now+offset); osc.stop(now+offset+0.16);
+    });
+  }catch(e){}
+}
+
 // ─── MINUTEUR DE REPOS ──────────────────────────────────────────────────────
 let timerIv=null, timerRem=0, timerTotal=0;
 
@@ -621,6 +643,8 @@ function startTimer(ex, si){
   const dur = ex.rpe===7 ? 100 : ex.rpe===8 ? 70 : 60;
   clearInterval(timerIv);
   timerTotal=dur; timerRem=dur;
+  // Déverrouille l'audio dans le geste utilisateur (clic sur la série)
+  try{ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
 
   const bar  = document.getElementById('rest-timer');
   const lbl  = document.getElementById('timer-lbl');
@@ -638,6 +662,7 @@ function startTimer(ex, si){
     if(timerRem<=0){
       clearInterval(timerIv);
       try{ if(navigator.vibrate) navigator.vibrate([150,80,150,80,200]); }catch(e){}
+      playBeep();
       cd.textContent='✓ Go !'; cd.className='timer-cd ok';
       fill.style.width='100%';
       setTimeout(()=>{ bar.classList.remove('visible'); fill.style.width='0%'; },2500);
@@ -702,10 +727,26 @@ function buildWeight(){
     el.innerHTML=`<div><span class="wew">${e.weight.toFixed(1)} kg</span> <span class="wed">${dlabel}</span></div><div style="display:flex;align-items:center;gap:10px">${deltaHtml}<button class="wedel" onclick="delWeight('${e.date}')">✕</button></div>`;
     list.appendChild(el);
   });
-  const trendEl=document.getElementById('wgtTrend');if(!trendEl)return;
+  const trendEl=document.getElementById('wgtTrend'),goalEl=document.getElementById('wgtGoal');
+  if(!trendEl)return;
+  const GOAL_WEIGHT=72.5;
   const asc=[...weightLog].sort((a,b)=>a.date.localeCompare(b.date));
+  if(asc.length<1){
+    if(goalEl)goalEl.innerHTML='';
+    trendEl.innerHTML=`<div class="wgt-badge wgt-none">Ajoute ta première pesée pour démarrer le suivi</div>`;
+    return;
+  }
+  const latest=asc[asc.length-1].weight;
+  const toGo=(latest-GOAL_WEIGHT);
+  if(goalEl){
+    if(toGo<=0){
+      goalEl.innerHTML=`<div class="wgt-badge wgt-ok" style="margin-bottom:8px">🎯 Objectif ${GOAL_WEIGHT} kg atteint !</div>`;
+    }else{
+      goalEl.innerHTML=`<div class="wgt-badge wgt-none" style="margin-bottom:8px">🎯 Objectif ${GOAL_WEIGHT} kg — encore ${toGo.toFixed(1)} kg à perdre</div>`;
+    }
+  }
   if(asc.length<2){
-    trendEl.innerHTML=`<div class="wgt-badge wgt-none">Ajoute une 2ᵉ pesée dans ~1 semaine pour calculer la tendance</div>`;
+    trendEl.innerHTML=`<div class="wgt-badge wgt-none">Ajoute une 2ᵉ pesée dans ~2 semaines pour calculer la tendance</div>`;
     return;
   }
   const recent=asc.slice(-4);
@@ -714,12 +755,14 @@ function buildWeight(){
   const weeks=Math.max(days/7,0.3);
   const ratePerWeek=(last.weight-first.weight)/weeks;
   let html;
-  if(ratePerWeek>-0.25){
-    html=`<div class="wgt-badge wgt-slow">⚠ Rythme lent (${ratePerWeek.toFixed(2)} kg/sem.) — réduis d'environ 100-150 kcal/j (~1 850 kcal)</div>`;
+  const etaWeeks=ratePerWeek<-0.02?Math.ceil(toGo/Math.abs(ratePerWeek)):null;
+  const etaTxt=etaWeeks&&toGo>0?` · ~${etaWeeks} sem. avant l'objectif`:'';
+  if(ratePerWeek>-0.05){
+    html=`<div class="wgt-badge wgt-slow">⚠ Poids quasi stable (${ratePerWeek.toFixed(2)} kg/sem.) — le déficit ne semble plus opérer, vérifie les apports</div>`;
   }else if(ratePerWeek<-0.65){
-    html=`<div class="wgt-badge wgt-fast">⚠ Rythme trop rapide (${ratePerWeek.toFixed(2)} kg/sem.) — remonte d'environ 100-150 kcal/j (~2 100 kcal) pour préserver le muscle</div>`;
+    html=`<div class="wgt-badge wgt-fast">⚠ Rythme rapide (${ratePerWeek.toFixed(2)} kg/sem.) — remonte un peu les calories pour préserver le muscle</div>`;
   }else{
-    html=`<div class="wgt-badge wgt-ok">✓ Rythme optimal (${ratePerWeek.toFixed(2)} kg/sem.) — garde 1 975 kcal/j</div>`;
+    html=`<div class="wgt-badge wgt-ok">✓ Rythme correct (${ratePerWeek.toFixed(2)} kg/sem.)${etaTxt} — garde 1 975 kcal/j</div>`;
   }
   trendEl.innerHTML=html;
 }
