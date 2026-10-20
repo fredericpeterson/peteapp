@@ -35,6 +35,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .nb[data-d="2"].active .dot{background:rgba(79,156,249,.15);color:var(--legs);}
 .nb[data-d="3"].active .dot{background:rgba(240,237,232,.08);color:var(--text);}
 .nb[data-d="4"].active .dot{background:rgba(251,113,133,.15);color:var(--cardio);}
+.nb[data-d="5"].active .dot{background:rgba(99,102,241,.15);color:#a5b4fc;}
 .page{display:none;padding:0 16px;}.page.active{display:block;}
 .ph{padding:52px 0 20px;border-bottom:1px solid var(--border);margin-bottom:20px;}
 .psup{font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text3);margin-bottom:6px;font-family:'DM Mono',monospace;display:flex;justify-content:space-between;align-items:center;}
@@ -160,6 +161,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .timer-fill.urgent{background:#f87171;}
 .tbtn{background:none;border:1px solid var(--border);border-radius:var(--rs);color:var(--text3);font-size:11px;font-family:'DM Mono',monospace;padding:5px 10px;cursor:pointer;white-space:nowrap;transition:border-color .15s,color .15s;}
 .tbtn:hover{border-color:var(--border2);color:var(--text);}
+.hist-empty{text-align:center;padding:60px 20px;color:var(--text3);font-size:13px;line-height:1.8;}
+.hist-session{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px;margin-bottom:10px;}
+.hs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.hs-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+.hs-exos{display:flex;flex-direction:column;gap:6px;}
+.hs-exo{display:flex;align-items:center;gap:10px;}
+.hs-ename{font-size:12px;color:var(--text2);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hs-weights{font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);}
+.chart-wrap{margin-bottom:24px;}
+.chart-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.chart-svg-wrap{width:100%;overflow:visible;position:relative;}
+.chart-svg-wrap svg{width:100%;display:block;}
+.chart-tooltip{position:fixed;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);pointer-events:none;z-index:200;white-space:nowrap;opacity:0;transition:opacity .15s;}
+.hist-section{margin-bottom:28px;}
+.hist-filter{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.hf-btn{background:none;border:1px solid var(--border);border-radius:99px;color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;padding:4px 12px;cursor:pointer;transition:all .15s;}
+.hf-btn.active{border-color:var(--border2);color:var(--text);}
+.hf-btn.hf-push.active{border-color:rgba(245,158,11,.4);color:var(--push);background:rgba(245,158,11,.08);}
+.hf-btn.hf-pull.active{border-color:rgba(62,207,142,.4);color:var(--pull);background:rgba(62,207,142,.08);}
+.hf-btn.hf-legs.active{border-color:rgba(79,156,249,.4);color:var(--legs);background:rgba(79,156,249,.08);}
 @keyframes fu{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .page.active .ec{animation:fu .25s ease both;}
 .page.active .ec:nth-child(1){animation-delay:.03s}.page.active .ec:nth-child(2){animation-delay:.06s}
@@ -273,6 +294,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <button class="rbtn" onclick="resetCardio()">↺ Réinitialiser la semaine</button>
 </div>
 
+<div class="page" id="p5">
+  <div class="ph"><div class="psup">Progression · Programme Entretien</div><div class="ptitle"><strong>Historique</strong> des séances</div></div>
+  <div id="histContent"></div>
+</div>
+
 <div id="rest-timer" class="rest-timer">
   <div class="timer-row1">
     <span id="timer-lbl" class="timer-lbl">Repos</span>
@@ -291,6 +317,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <button class="nb" data-d="2" onclick="goTo(2)"><div class="dot">LEG</div>Legs</button>
   <button class="nb" data-d="4" onclick="goTo(4)"><div class="dot">♥</div>Cardio</button>
   <button class="nb" data-d="3" onclick="goTo(3)"><div class="dot">RÉC</div>Récap</button>
+  <button class="nb" data-d="5" onclick="goTo(5)"><div class="dot">HIS</div>Hist.</button>
 </nav>
 
 <script>
@@ -397,7 +424,7 @@ let cur=0;
 function goTo(i){
   document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('active',j===i));
   document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('active',+b.dataset.d===i));
-  cur=i;window.scrollTo(0,0);if(i===3)updateRecap();
+  cur=i;window.scrollTo(0,0);if(i===3)updateRecap();if(i===5)buildHistPage();
 }
 function flash(d){const el=document.getElementById('sv'+d);if(!el)return;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),1800);}
 
@@ -522,6 +549,16 @@ function refreshDay(d){
 function resetDay(d){
   if(!confirm('Réinitialiser la séance ?\n\nLes poids et les progressions validées seront appliqués.'))return;
   const exos=getExos(d);
+  // ── Log séance avant reset
+  const logEntry={
+    date:new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}),
+    ts:Date.now(),dayIdx:d,dayKey:SEANCE[d].key,weekNum:currentProgWeek,
+    exoNames:exos.map(ex=>ex.name),
+    exoWeights:exos.map((ex,ei)=>[...(state[d][ei]?.weights||[])])
+  };
+  if(logEntry.exoWeights.some(ws=>ws.some(w=>w!==''))){
+    const logs=loadLogs();logs.push(logEntry);saveLogs(logs);
+  }
   exos.forEach((ex,ei)=>{
     // save weights to history
     state[d][ei]?.weights?.forEach((w,si)=>{if(w&&history[d]?.[ei])history[d][ei].weights[si]=w;});
@@ -768,6 +805,136 @@ function buildWeight(){
 }
 
 function ar(t){t.style.height='auto';t.style.height=t.scrollHeight+'px';}
+
+// ─── LOGS / HISTORIQUE ───────────────────────────────────────────────────────
+const LOGS_KEY='ppl_v4_logs';
+function loadLogs(){try{return JSON.parse(localStorage.getItem(LOGS_KEY)||'[]');}catch(e){return[];}}
+function saveLogs(logs){try{localStorage.setItem(LOGS_KEY,JSON.stringify(logs));}catch(e){}}
+
+// Couleurs validées dark mode (OKLCH 0.48–0.67, ΔE CVD > 7.9)
+const CHART_COLORS={push:'#d97706',pull:'#059669',legs:'#3b82f6'};
+
+let _tooltip=null;
+function getTip(){
+  if(!_tooltip){_tooltip=document.createElement('div');_tooltip.className='chart-tooltip';document.body.appendChild(_tooltip);}
+  return _tooltip;
+}
+function showTip(e,html){const t=getTip();t.innerHTML=html;t.style.opacity='1';moveTip(e);}
+function moveTip(e){const t=getTip();const x=e.clientX+14,y=e.clientY-32;t.style.left=Math.min(x,window.innerWidth-t.offsetWidth-10)+'px';t.style.top=Math.max(y,8)+'px';}
+function hideTip(){getTip().style.opacity='0';}
+
+let histFilter=null;
+
+function buildHistPage(){
+  const el=document.getElementById('histContent');
+  const logs=loadLogs();
+  el.innerHTML='';
+  // Filtres
+  const fd=document.createElement('div');fd.className='hist-filter';
+  [{key:null,label:'Tous',cls:''},{key:'push',label:'Push',cls:'hf-push'},{key:'pull',label:'Pull',cls:'hf-pull'},{key:'legs',label:'Legs',cls:'hf-legs'}].forEach(f=>{
+    const b=document.createElement('button');
+    b.className='hf-btn '+f.cls+(histFilter===f.key?' active':'');
+    b.textContent=f.label;
+    b.onclick=()=>{histFilter=f.key;buildHistPage();};
+    fd.appendChild(b);
+  });
+  el.appendChild(fd);
+  const filtered=histFilter?logs.filter(l=>l.dayKey===histFilter):logs;
+  if(filtered.length===0){
+    const emp=document.createElement('div');emp.className='hist-empty';
+    emp.innerHTML=logs.length===0
+      ?'📋 Aucune séance enregistrée.<br><span style="font-size:11px">Réinitialisez une séance après l\'avoir complétée<br>pour démarrer l\'historique.</span>'
+      :'📋 Aucune séance de ce type.';
+    el.appendChild(emp);return;
+  }
+  // Section graphiques
+  const cs=document.createElement('div');cs.className='hist-section';
+  const ct=document.createElement('div');ct.className='secl';ct.textContent='Progression par exercice';
+  cs.appendChild(ct);buildCharts(cs,filtered);el.appendChild(cs);
+  // Section liste
+  const ls=document.createElement('div');ls.className='hist-section';
+  const lt=document.createElement('div');lt.className='secl';lt.textContent='Séances passées';
+  ls.appendChild(lt);
+  [...filtered].sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(log=>{
+    const card=document.createElement('div');card.className='hist-session';
+    const color=CHART_COLORS[log.dayKey]||'#888';
+    card.innerHTML=`<div class="hs-head"><span class="session-badge badge-${log.dayKey}" style="margin:0;padding:2px 10px;font-size:10px;">${log.dayKey.charAt(0).toUpperCase()+log.dayKey.slice(1)}</span><span class="hs-date">${log.date} · S${log.weekNum}</span></div><div class="hs-exos" id="hex-${log.ts}"></div>`;
+    const ec=card.querySelector('#hex-'+log.ts);
+    (log.exoNames||[]).forEach((name,ei)=>{
+      const ws=(log.exoWeights[ei]||[]).filter(w=>w!==''&&w!==undefined);
+      if(!ws.length)return;
+      const avg=(ws.reduce((a,w)=>a+parseFloat(w),0)/ws.length).toFixed(1);
+      const row=document.createElement('div');row.className='hs-exo';
+      row.innerHTML=`<div class="hs-ename">${name}</div><div class="hs-weights" style="color:${color}">${avg} kg <span style="color:var(--text3)">moy.</span></div>`;
+      ec.appendChild(row);
+    });
+    ls.appendChild(card);
+  });
+  el.appendChild(ls);
+}
+
+function buildCharts(container,logs){
+  const exoMap={};
+  logs.forEach(log=>{
+    const color=CHART_COLORS[log.dayKey]||'#888';
+    (log.exoNames||[]).forEach((name,ei)=>{
+      const ws=(log.exoWeights[ei]||[]).filter(w=>w!==''&&w!==undefined);
+      if(!ws.length)return;
+      const avg=ws.reduce((a,w)=>a+parseFloat(w),0)/ws.length;
+      if(!exoMap[name])exoMap[name]={color,points:[]};
+      exoMap[name].points.push({week:log.weekNum,avg:parseFloat(avg.toFixed(1)),date:log.date,ts:log.ts||0});
+    });
+  });
+  Object.entries(exoMap).forEach(([name,{color,points}])=>{
+    if(!points.length)return;
+    points.sort((a,b)=>(a.ts||a.week)-(b.ts||b.week));
+    // baseWeight depuis PROGRAM (champ bw)
+    let bw=null;
+    PROGRAM.forEach(p=>p.groupes.forEach(g=>g.exos.forEach(ex=>{if(ex.name===name&&ex.bw)bw=ex.bw;})));
+    const wrap=document.createElement('div');wrap.className='chart-wrap';
+    const ttl=document.createElement('div');ttl.className='chart-title';
+    ttl.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>${name}`;
+    wrap.appendChild(ttl);
+    const sw=document.createElement('div');sw.className='chart-svg-wrap';
+    sw.appendChild(makeSVGChart(points,color,bw));
+    wrap.appendChild(sw);container.appendChild(wrap);
+  });
+}
+
+function makeSVGChart(points,color,baseWeight){
+  const W=320,H=110,PAD={top:12,right:16,bottom:26,left:36};
+  const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
+  const targetPts=baseWeight?Array.from({length:8},(_,i)=>({week:i+1,avg:baseWeight+i})):null;
+  const allV=points.map(p=>p.avg);
+  if(targetPts)targetPts.forEach(p=>allV.push(p.avg));
+  let yMin=Math.min(...allV),yMax=Math.max(...allV);
+  const yP=Math.max((yMax-yMin)*.2,2);yMin=Math.max(0,yMin-yP);yMax+=yP;
+  const xS=w=>PAD.left+((w-1)/7)*cW;
+  const yS=v=>PAD.top+cH-((v-yMin)/(yMax-yMin))*cH;
+  let grid='',yLbl='';
+  for(let i=0;i<=3;i++){const v=yMin+(yMax-yMin)*(i/3),y=yS(v);grid+=`<line x1="${PAD.left}" y1="${y.toFixed(1)}" x2="${W-PAD.right}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;yLbl+=`<text x="${PAD.left-5}" y="${(y+4).toFixed(1)}" fill="#555450" font-size="9" text-anchor="end" font-family="'DM Mono',monospace">${Math.round(v)}</text>`;}
+  let xLbl='';
+  for(let w=1;w<=8;w++)xLbl+=`<text x="${xS(w).toFixed(1)}" y="${H-PAD.bottom+14}" fill="#555450" font-size="9" text-anchor="middle" font-family="'DM Mono',monospace">S${w}</text>`;
+  const tLine=targetPts?`<path d="${targetPts.map((p,i)=>`${i===0?'M':'L'}${xS(p.week).toFixed(1)},${yS(p.avg).toFixed(1)}`).join(' ')}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-dasharray="4,3"/>`:'';
+  const rLine=points.length>=2?`<path d="${points.map((p,i)=>`${i===0?'M':'L'}${xS(p.week).toFixed(1)},${yS(p.avg).toFixed(1)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:'';
+  let marks='',hits='';
+  points.forEach(p=>{const cx=xS(p.week).toFixed(1),cy=yS(p.avg).toFixed(1);marks+=`<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="2"/>`;hits+=`<circle cx="${cx}" cy="${cy}" r="16" fill="transparent" data-label="${p.avg}kg — ${p.date} (S${p.week})" class="chart-hit"/>`;});
+  if(points.length>=1){const l=points[points.length-1];marks+=`<text x="${(xS(l.week)+6).toFixed(1)}" y="${(yS(l.avg)-4).toFixed(1)}" fill="${color}" font-size="9" font-family="'DM Mono',monospace" font-weight="500">${l.avg}kg</text>`;}
+  const NS='http://www.w3.org/2000/svg';
+  const svg=document.createElementNS(NS,'svg');
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  svg.style.cssText='width:100%;max-width:520px;height:auto;overflow:visible;';
+  svg.innerHTML=`${grid}${yLbl}${xLbl}${tLine}${rLine}${marks}${hits}`;
+  svg.querySelectorAll('.chart-hit').forEach(el=>{
+    el.addEventListener('mouseenter',e=>showTip(e,el.dataset.label));
+    el.addEventListener('mousemove',e=>moveTip(e));
+    el.addEventListener('mouseleave',hideTip);
+    el.addEventListener('touchstart',e=>{e.preventDefault();showTip(e.touches[0],el.dataset.label);},{passive:false});
+    el.addEventListener('touchend',hideTip);
+  });
+  return svg;
+}
 
 // ─── CARDIO ─────────────────────────────────────────────────────────────────
 const CARDIO_DAYS=[
