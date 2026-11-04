@@ -282,6 +282,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="rbtn" onclick="changeWeek(+1)" style="padding:6px 16px;font-size:13px;">→</button>
   </div>
   <div id="deload-recap" style="display:none" class="deload-banner">⬇ Semaine 8 · DÉLOAD — 2 séries / exercice · Charges identiques · Récupération active</div>
+  <div id="newcycle-banner" style="display:none;background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.25);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;">
+    <div style="font-size:12px;font-weight:500;color:var(--green);margin-bottom:6px;">🏁 Cycle terminé — prêt pour le suivant ?</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Les poids de base seront augmentés (+2.5 kg haut du corps · +5 kg bas du corps). Les overrides sont remis à zéro.</div>
+    <button class="rbtn" onclick="startNewCycle()" style="border-color:rgba(74,222,128,.4);color:var(--green);font-size:11px;">▶ Démarrer le cycle suivant</button>
+  </div>
   <div id="streakWidget"></div>
   <div class="rw" id="recapCards"></div>
   <div class="srow" style="margin-bottom:24px">
@@ -716,6 +721,30 @@ function updateWkLabel(){
   const el=document.getElementById('wkLabel');
   if(el){el.textContent=`Semaine ${currentProgWeek} / ${NUM_WEEKS}${dl?' — DÉLOAD':''}`;el.style.color=dl?'var(--indigo)':'var(--text)';}
   const dr=document.getElementById('deload-recap');if(dr)dr.style.display=dl?'flex':'none';
+  const nc=document.getElementById('newcycle-banner');if(nc)nc.style.display=dl?'block':'none';
+}
+
+function startNewCycle(){
+  if(!confirm('Démarrer le cycle suivant ?\nLes poids de base seront augmentés et les overrides remis à zéro.'))return;
+  // Augmenter les bw : +2.5kg upper (push/pull), +5kg lower (legs)
+  PROGRAM.forEach((p,d)=>{
+    const inc=d===2?5:2.5;
+    p.groupes.forEach(g=>g.exos.forEach(ex=>{if(ex.bw)ex.bw=Math.round((ex.bw+inc)*2)/2;}));
+  });
+  // Sauvegarder les nouveaux bw dans recalib
+  const recalib={};
+  PROGRAM.forEach(p=>p.groupes.forEach(g=>g.exos.forEach(ex=>{
+    if(ex.bw)recalib[ex.name.toLowerCase().replace(/[^a-z0-9]/g,'_').slice(0,40)]=ex.bw;
+  })));
+  try{localStorage.setItem(RECALIB_KEY,JSON.stringify(recalib));}catch(e){}
+  // Reset semaine à 1, overrides à zéro
+  saveProgWeek(1);
+  store.override=PROGRAM.map((p,d)=>allExos(d).map(()=>0));
+  store.pending=makePending();
+  persist();
+  SEANCE=buildSEANCE();
+  [0,1,2].forEach(d=>{buildHeaders(d);buildExList(d);refreshDay(d);});
+  updateWkLabel();updateRecap();
 }
 
 function changeWeek(delta){
