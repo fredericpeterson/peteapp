@@ -573,6 +573,9 @@ function buildDay(d){
   exos.forEach((ex,ei)=>{
     const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
     if(!row)return;row.innerHTML='';
+    // Garantir que state[d][ei] existe (désync localStorage possible)
+    if(!state[d])state[d]=makeState()[d];
+    if(!state[d][ei])state[d][ei]={done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),note:''};
     // sync sets count
     if(state[d][ei]&&state[d][ei].done.length!==ex.sets){
       state[d][ei].done=Array(ex.sets).fill(false);
@@ -1207,24 +1210,28 @@ function renderFocusEx(){
   if(focusDay<0||!exos.length)return;
   const ex=exos[focusExIdx];
   const tgt=getTarget(focusDay,focusExIdx);
+  const d=focusDay,ei=focusExIdx;
   document.getElementById('focusTitle').textContent=`${SEANCE[focusDay].label} · ${focusExIdx+1}/${exos.length}`;
   document.getElementById('focusPrev').disabled=focusExIdx===0;
   document.getElementById('focusNext').disabled=focusExIdx===exos.length-1;
-  // Render exercise card (reuse state)
-  const d=focusDay,ei=focusExIdx;
+  // Garantir que state[d][ei] existe
+  if(!state[d])state[d]=makeState()[d];
+  if(!state[d][ei])state[d][ei]={done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),note:''};
+  if(state[d][ei].done.length!==ex.sets){state[d][ei].done=Array(ex.sets).fill(false);state[d][ei].weights=Array(ex.sets).fill('');}
   const tBadge=tgt?`<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--push);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:99px;padding:2px 10px;">🎯 ${tgt} kg</span>`:'';
   const rpeBadge=ex.rpe?`<span class="rpe rpe${ex.rpe}">RPE ${ex.rpe}</span>`:'';
   const tempoBadge=ex.tempo?`<span class="tempo-badge">⏱ ${ex.tempo}</span>`:'';
   let setsHtml='<div class="sr" style="margin-top:16px">';
   for(let si=0;si<ex.sets;si++){
-    const done=state[d][ei]?.done?.[si]||false;
-    const w=state[d][ei]?.weights?.[si]||'';
+    const done=state[d][ei].done[si]||false;
+    const w=state[d][ei].weights[si]||'';
     const pw=history[d]?.[ei]?.weights?.[si]||'';
     const hint=pw?`<div class="sprev">préc. ${pw}kg</div>`:(tgt?`<div class="sprev" style="color:rgba(245,158,11,.5)">cible ${tgt}kg</div>`:'<div class="sprev"></div>');
     setsHtml+=`<div class="sb${done?' done':''}" data-fsi="${si}"><span class="slbl">S${si+1}</span><span class="sreps">${ex.reps}</span><div class="skw"><input class="sk fsk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${w}" data-fsi="${si}"><span class="sku">kg</span></div>${hint}</div>`;
   }
   setsHtml+='</div>';
-  document.getElementById('focusContent').innerHTML=`
+  const fc=document.getElementById('focusContent');
+  fc.innerHTML=`
     <div class="ec" style="margin-bottom:16px">
       <div class="et"><div class="ei">
         <div class="ename" style="font-size:16px">${ex.name}</div>
@@ -1233,8 +1240,8 @@ function renderFocusEx(){
       </div></div>
       ${setsHtml}
     </div>`;
-  // Wire up events in focus
-  document.querySelectorAll('.sb[data-fsi]').forEach(btn=>{
+  // Wire events — scoped à focusContent uniquement
+  fc.querySelectorAll('.sb[data-fsi]').forEach(btn=>{
     btn.addEventListener('click',function(e){
       if(e.target.tagName==='INPUT')return;
       const si=+btn.dataset.fsi;
@@ -1243,7 +1250,7 @@ function renderFocusEx(){
       persist();refreshDay(d);renderFocusEx();
     });
   });
-  document.querySelectorAll('.fsk').forEach(inp=>{
+  fc.querySelectorAll('.fsk').forEach(inp=>{
     inp.addEventListener('click',e=>e.stopPropagation());
     inp.addEventListener('change',e=>{
       const si=+inp.dataset.fsi;
