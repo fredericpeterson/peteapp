@@ -533,8 +533,10 @@ function buildHeaders(d){
   document.getElementById('d'+d+'t').textContent=getExos(d).reduce((a,e)=>a+e.sets,0);
 }
 
+const shuffleState={0:false,1:false,2:false};
+const shuffleOrder={0:null,1:null,2:null};
 function buildExList(d){
-  if(shuffleState&&shuffleState[d]&&shuffleOrder[d]){buildExListShuffle(d);return;}
+  if(shuffleState[d]&&shuffleOrder[d]){buildExListShuffle(d);return;}
   const container=document.getElementById('exlist'+d);container.innerHTML='';
   let gi=0;
   SEANCE[d].groupes.forEach(g=>{
@@ -1261,8 +1263,6 @@ function renderFocusEx(){
 }
 
 // ─── ORDRE ALÉATOIRE ─────────────────────────────────────────────────────────
-const shuffleState={0:false,1:false,2:false};
-const shuffleOrder={0:null,1:null,2:null};
 function toggleShuffle(d){
   shuffleState[d]=!shuffleState[d];
   const btn=document.getElementById('shuffleBtn'+d);
