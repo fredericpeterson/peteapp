@@ -652,18 +652,23 @@ function buildExList(d){
 
 // Saisie d'un poids : les autres séries du même exercice suivent si elles sont vides
 // ou portent encore l'ancienne valeur. Les séries validées (done) ne sont jamais touchées.
-function setWeight(d,ei,si,val){
+const _lastProp={};
+function setWeight(d,ei,si,val,src){
   const sx=state[d][ei];if(!sx)return;
-  const old=sx.weights[si]||'';
+  const key=d+'-'+ei+'-'+si;
+  // « ancienne valeur » : celle d'avant la frappe, ou la dernière valeur non vide si on a effacé la case pour retaper
+  const old=sx.weights[si]||_lastProp[key]||'';
   sx.weights[si]=val;
   if(val!==''){
+    _lastProp[key]=val;
     // vides : toutes ; déjà remplies avec l'ancienne valeur : seulement les suivantes (une série finale plus légère ne touche pas les précédentes)
     sx.weights.forEach((w,j)=>{if(j!==si&&!sx.done[j]&&(w===''||(j>si&&w===old)))sx.weights[j]=val;});
   }
   persist();
   const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
-  if(row)row.querySelectorAll('input.sk').forEach((inp,j)=>{inp.value=sx.weights[j]||'';});
-  if(focusDay===d&&focusExIdx===ei)document.querySelectorAll('#focusContent .fsk').forEach(inp=>{inp.value=sx.weights[+inp.dataset.fsi]||'';});
+  // on réécrit tous les champs sauf celui qu'on est en train de taper (sinon « 52. » perd son point)
+  if(row)row.querySelectorAll('input.sk').forEach((inp,j)=>{if(inp!==src)inp.value=sx.weights[j]||'';});
+  if(focusDay===d&&focusExIdx===ei)document.querySelectorAll('#focusContent .fsk').forEach(inp=>{if(inp!==src)inp.value=sx.weights[+inp.dataset.fsi]||'';});
   flash(d);refreshPRBadge(d,ei);
 }
 
@@ -697,7 +702,8 @@ function buildDay(d){
         persist();refreshDay(d);flash(d);
       });
       const inp=b.querySelector('input');
-      inp.addEventListener('change',e=>setWeight(d,ei,si,e.target.value));
+      inp.addEventListener('input',e=>setWeight(d,ei,si,e.target.value,e.target));
+      inp.addEventListener('change',e=>setWeight(d,ei,si,e.target.value,e.target));
       inp.addEventListener('click',e=>e.stopPropagation());
       row.appendChild(b);
     }
@@ -1411,7 +1417,8 @@ function renderFocusEx(){
   });
   fc.querySelectorAll('.fsk').forEach(inp=>{
     inp.addEventListener('click',e=>e.stopPropagation());
-    inp.addEventListener('change',e=>setWeight(d,ei,+inp.dataset.fsi,e.target.value));
+    inp.addEventListener('input',e=>setWeight(d,ei,+inp.dataset.fsi,e.target.value,e.target));
+    inp.addEventListener('change',e=>setWeight(d,ei,+inp.dataset.fsi,e.target.value,e.target));
   });
 }
 
