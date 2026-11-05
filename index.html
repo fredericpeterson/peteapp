@@ -975,7 +975,8 @@ function playBeep(){
 // ─── MINUTEUR DE REPOS ──────────────────────────────────────────────────────
 let timerIv=null,timerTo=null,timerHideTo=null,timerRem=0,timerTotal=0,timerEnd=0,timerActive=false;
 const BASE_TITLE=document.title;
-function setTimerTitle(txt){document.title=txt?`${txt} · ${BASE_TITLE}`:BASE_TITLE;}
+// Titre court : un onglet de navigateur n'affiche que les premiers caractères
+function setTimerTitle(txt){document.title=txt||BASE_TITLE;}
 
 // Le compte à rebours se calcule à partir d'une heure de fin (Date.now) : exact même si le navigateur
 // ralentit les timers d'un onglet caché ; rattrapage immédiat au retour sur l'onglet (visibilitychange).
