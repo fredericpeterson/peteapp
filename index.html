@@ -121,6 +121,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .sb.done .sprev{color:rgba(74,222,128,.5);}
 .prog-btn{margin-top:10px;}
 .prog-confirm{width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--rs);color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;padding:8px 10px;cursor:pointer;transition:all .2s;text-align:center;letter-spacing:.02em;}
+.skr{border:none;border-bottom:1px solid var(--border2);background:transparent;font-size:11px;font-weight:500;width:36px;text-align:center;color:var(--text);outline:none;padding:1px 0;font-family:'DM Mono',monospace;}
+.skr::placeholder{color:var(--text3);}.skr:focus{border-bottom-color:var(--text2);}
+.sk::-webkit-inner-spin-button,.sk::-webkit-outer-spin-button,.skr::-webkit-inner-spin-button,.skr::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.sk,.skr{-moz-appearance:textfield;appearance:textfield;}
+.prog-hint{font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:6px;line-height:1.4;}
+.prog-confirm.rec{border-style:solid;border-color:var(--gborder);color:var(--green);}
+.toast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,12px);background:var(--bg3);border:1px solid var(--gborder);color:var(--green);font-family:'DM Mono',monospace;font-size:11px;padding:8px 14px;border-radius:99px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:400;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis;}
+.toast.show{opacity:1;transform:translate(-50%,0);}
 .prog-confirm:hover{border-color:rgba(74,222,128,.3);color:rgba(74,222,128,.7);}
 .prog-confirm.set{border-style:solid;border-color:var(--gborder);color:var(--green);background:var(--gbg);}
 .nw{margin-top:10px;}
@@ -250,6 +258,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="rbtn" onclick="resetDay(0)">↺ Réinitialiser</button>
     <button class="rbtn" id="shuffleBtn0" onclick="toggleShuffle(0)">⇄ Aléatoire</button>
     <button class="rbtn" onclick="openFocus(0)" style="border-color:rgba(99,102,241,.3);color:var(--indigo)">⊞ Focus</button>
+    <button class="rbtn" onclick="finishSession(0)" style="border-color:rgba(74,222,128,.3);color:var(--green)">✓ Terminer</button>
   </div>
 </div>
 
@@ -263,6 +272,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="rbtn" onclick="resetDay(1)">↺ Réinitialiser</button>
     <button class="rbtn" id="shuffleBtn1" onclick="toggleShuffle(1)">⇄ Aléatoire</button>
     <button class="rbtn" onclick="openFocus(1)" style="border-color:rgba(99,102,241,.3);color:var(--indigo)">⊞ Focus</button>
+    <button class="rbtn" onclick="finishSession(1)" style="border-color:rgba(74,222,128,.3);color:var(--green)">✓ Terminer</button>
   </div>
 </div>
 
@@ -276,6 +286,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
     <button class="rbtn" onclick="resetDay(2)">↺ Réinitialiser</button>
     <button class="rbtn" id="shuffleBtn2" onclick="toggleShuffle(2)">⇄ Aléatoire</button>
     <button class="rbtn" onclick="openFocus(2)" style="border-color:rgba(99,102,241,.3);color:var(--indigo)">⊞ Focus</button>
+    <button class="rbtn" onclick="finishSession(2)" style="border-color:rgba(74,222,128,.3);color:var(--green)">✓ Terminer</button>
   </div>
 </div>
 
@@ -501,7 +512,7 @@ const BADGE_CLS=['badge-push','badge-pull','badge-legs'];
 const DAYS_LABEL=['Lundi','Mercredi','Vendredi'];
 
 const KEY='ppl_v4';
-function makeState(){return PROGRAM.map((p,d)=>getExos(d).map(ex=>({done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),note:''})));}
+function makeState(){return PROGRAM.map((p,d)=>getExos(d).map(ex=>({done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),reps:Array(ex.sets).fill(''),note:''})));}
 function makeHistory(){return PROGRAM.map((p,d)=>getExos(d).map(()=>({weights:Array(6).fill('')})));}
 // Initialize override from week so first launch shows correct weights
 function makeOverride(){
@@ -515,6 +526,7 @@ try{const r=localStorage.getItem(KEY);store=r?JSON.parse(r):null;if(!store?.stat
 if(!store)store={state:makeState(),history:makeHistory(),override:makeOverride(),pending:makePending()};
 if(!store.override)store.override=makeOverride();
 if(!store.pending)store.pending=makePending();
+if(!store.logged)store.logged=[null,null,null];
 // ── Migration : le programme a changé (exercices déplacés / remplacés) → on réaligne
 //    state / history / override / pending sur les NOMS d'exercices, jamais sur la position.
 const PROG_NAMES=()=>PROGRAM.map((p,d)=>allExos(d).map(e=>e.name));
@@ -566,14 +578,29 @@ function confirmProg(d,ei){
   if(pgb)renderProgBtn(pgb,d,ei);
 }
 
+function repRange(txt){const m=String(txt).match(/(\d+)\D+(\d+)/);return m?{min:+m[1],max:+m[2]}:null;}
 function renderProgBtn(el,d,ei){
   const ex=getExos(d)[ei];
   if(!ex||ex.prog===0||!ex.bw){el.innerHTML='';return;}
-  const allDone=state[d][ei]?.done?.every(Boolean);
+  const sx=state[d][ei];
+  const allDone=sx?.done?.every(Boolean);
   if(!allDone){el.innerHTML='';return;}
   const isPending=store.pending?.[d]?.[ei]||false;
-  const next=Math.round((getTarget(d,ei)+ex.prog)*2)/2;
-  el.innerHTML=`<button class="prog-confirm${isPending?' set':''}" onclick="confirmProg(${d},${ei})">${isPending?`✓ +${ex.prog}kg validé · cible → ${next}kg  ·  Annuler`:`⬆ Progression atteinte ? → valider +${ex.prog}kg`}</button>`;
+  const tgt=getTarget(d,ei);
+  const next=Math.round((tgt+ex.prog)*2)/2;
+  // Double progression : toutes les séries au haut de la fourchette, à la charge cible → on monte
+  const rr=repRange(ex.reps),reps=(sx.reps||[]).map(r=>parseInt(r,10));
+  let rec=false,hint='';
+  if(rr&&reps.length&&reps.every(r=>!isNaN(r))){
+    const atTarget=(sx.weights||[]).every(w=>w===''||parseFloat(w)>=tgt-0.01);
+    if(atTarget&&reps.every(r=>r>=rr.max))rec=true;
+    else if(reps.some(r=>r<rr.min))hint=`Sous la fourchette (${Math.min(...reps)} reps < ${rr.min}) — garde ${tgt} kg la prochaine fois`;
+    else hint=`Encore ${rr.max-Math.min(...reps)} rep(s) sur la série la plus faible avant de monter`;
+  }
+  const label=isPending?`✓ +${ex.prog}kg validé · cible → ${next}kg  ·  Annuler`
+    :rec?`⬆ ${reps.join('/')} reps : haut de fourchette atteint → valider +${ex.prog}kg (recommandé)`
+    :`⬆ Progression atteinte ? → valider +${ex.prog}kg`;
+  el.innerHTML=(hint&&!isPending?`<div class="prog-hint">${hint}</div>`:'')+`<button class="prog-confirm${isPending?' set':rec?' rec':''}" onclick="confirmProg(${d},${ei})">${label}</button>`;
 }
 
 function buildHeaders(d){
@@ -673,7 +700,75 @@ function setWeight(d,ei,si,val,src){
   // on réécrit tous les champs sauf celui qu'on est en train de taper (sinon « 52. » perd son point)
   if(row)row.querySelectorAll('input.sk').forEach((inp,j)=>{if(inp!==src)inp.value=sx.weights[j]||'';});
   if(focusDay===d&&focusExIdx===ei)document.querySelectorAll('#focusContent .fsk').forEach(inp=>{if(inp!==src)inp.value=sx.weights[+inp.dataset.fsi]||'';});
-  flash(d);refreshPRBadge(d,ei);
+  const pgb=document.getElementById(`pgb-${d}-${ei}`);if(pgb)renderProgBtn(pgb,d,ei);
+  autoLog(d);flash(d);refreshPRBadge(d,ei);
+}
+
+// Garantit state[d][ei] (désync localStorage, déload, anciennes versions sans reps)
+function ensureSx(d,ei,ex){
+  if(!state[d])state[d]=makeState()[d];
+  let sx=state[d][ei];
+  if(!sx)sx=state[d][ei]={done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),reps:Array(ex.sets).fill(''),note:''};
+  if(!sx.done||sx.done.length!==ex.sets){sx.done=Array(ex.sets).fill(false);sx.weights=Array(ex.sets).fill('');sx.reps=Array(ex.sets).fill('');}
+  if(!sx.weights||sx.weights.length!==ex.sets)sx.weights=Array(ex.sets).fill('');
+  if(!sx.reps||sx.reps.length!==ex.sets)sx.reps=Array(ex.sets).fill('');
+  return sx;
+}
+
+// ─── ENREGISTREMENT AUTOMATIQUE DE LA SÉANCE ─────────────────────────────────
+// Séance complète (toutes séries validées) → ajoutée à l'historique. Ensuite, toute modif
+// (poids, reps) met à jour la même entrée ; « Réinitialiser » ne crée donc pas de doublon.
+const LOG_FRESH_MS=18*3600*1000;
+function sessionEntry(d){
+  const exos=getExos(d);
+  return{
+    date:new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}),
+    ts:Date.now(),dayIdx:d,dayKey:SEANCE[d].key,weekNum:currentProgWeek,
+    exoNames:exos.map(e=>e.name),
+    exoWeights:exos.map((e,ei)=>[...(state[d][ei]?.weights||[])]),
+    exoReps:exos.map((e,ei)=>[...(state[d][ei]?.reps||[])])
+  };
+}
+function syncSessionLog(d,force){
+  const sx=state[d];if(!sx||!sx.length)return null;
+  if(!store.logged)store.logged=[null,null,null];
+  let ts=store.logged[d];
+  if(ts&&Date.now()-ts>LOG_FRESH_MS){store.logged[d]=ts=null;} // entrée d'une autre journée : on n'y touche plus
+  const all=sx.every(x=>(x.done||[]).length>0&&x.done.every(Boolean));
+  if(!ts&&!all&&!force)return null;
+  if(!sx.some(x=>(x.weights||[]).some(w=>w!==''&&w!==undefined)))return null;
+  const logs=loadLogs(),e=sessionEntry(d);
+  if(ts){
+    const i=logs.findIndex(l=>l.ts===ts);
+    if(i>=0){Object.assign(logs[i],{exoNames:e.exoNames,exoWeights:e.exoWeights,exoReps:e.exoReps});saveLogs(logs);return'updated';}
+  }
+  logs.push(e);saveLogs(logs);
+  store.logged[d]=e.ts;persist();
+  return'created';
+}
+function autoLog(d){if(syncSessionLog(d,false)==='created')toast('✓ Séance enregistrée dans l\'historique');}
+function finishSession(d){
+  const r=syncSessionLog(d,true);
+  toast(r==='created'?'✓ Séance enregistrée dans l\'historique':r==='updated'?'✓ Séance mise à jour dans l\'historique':'Rien à enregistrer — saisis au moins un poids');
+}
+let _toastTo=null;
+function toast(msg){
+  let t=document.getElementById('toast');
+  if(!t){t=document.createElement('div');t.id='toast';t.className='toast';document.body.appendChild(t);}
+  t.textContent=msg;t.classList.add('show');clearTimeout(_toastTo);_toastTo=setTimeout(()=>t.classList.remove('show'),2600);
+}
+
+// Reps réalisées (pas de propagation : elles baissent naturellement avec la fatigue)
+function setReps(d,ei,si,val,src){
+  const sx=state[d][ei];if(!sx)return;
+  if(!sx.reps)sx.reps=[];
+  sx.reps[si]=val;
+  persist();
+  const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
+  if(row)row.querySelectorAll('input.skr').forEach((inp,j)=>{if(inp!==src)inp.value=sx.reps[j]||'';});
+  if(focusDay===d&&focusExIdx===ei)document.querySelectorAll('#focusContent .fskr').forEach(inp=>{if(inp!==src)inp.value=sx.reps[+inp.dataset.fsi]||'';});
+  const pgb=document.getElementById(`pgb-${d}-${ei}`);if(pgb)renderProgBtn(pgb,d,ei);
+  autoLog(d);flash(d);
 }
 
 function buildDay(d){
@@ -681,14 +776,7 @@ function buildDay(d){
   exos.forEach((ex,ei)=>{
     const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
     if(!row)return;row.innerHTML='';
-    // Garantir que state[d][ei] existe (désync localStorage possible)
-    if(!state[d])state[d]=makeState()[d];
-    if(!state[d][ei])state[d][ei]={done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),note:''};
-    // sync sets count
-    if(state[d][ei]&&state[d][ei].done.length!==ex.sets){
-      state[d][ei].done=Array(ex.sets).fill(false);
-      state[d][ei].weights=Array(ex.sets).fill('');
-    }
+    ensureSx(d,ei,ex);
     const tgt=getTarget(d,ei);
     for(let si=0;si<ex.sets;si++){
       const pw=history[d]?.[ei]?.weights?.[si]||'';
@@ -697,14 +785,18 @@ function buildDay(d){
       const hint=pw
         ?`<div class="sprev">préc. ${pw}kg</div>`
         :(tgt?`<div class="sprev" style="color:rgba(245,158,11,.5)">cible ${tgt}kg</div>`:'<div class="sprev"></div>');
-      b.innerHTML=`<span class="slbl">Série ${si+1}</span><span class="sreps">${ex.reps}</span><div class="skw"><input class="sk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${state[d][ei].weights[si]||''}"><span class="sku">kg</span></div>${hint}`;
+      const rv=state[d][ei].reps[si]||'',runit=/sec/.test(ex.reps)?'sec':'reps';
+      b.innerHTML=`<span class="slbl">Série ${si+1}</span><span class="sreps">${ex.reps}</span><div class="skw"><input class="sk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${state[d][ei].weights[si]||''}"><span class="sku">kg</span></div><div class="skw"><input class="skr" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${rv}"><span class="sku">${runit}</span></div>${hint}`;
       b.addEventListener('click',function(e){
         if(e.target.tagName==='INPUT')return;
         state[d][ei].done[si]=!state[d][ei].done[si];
         if(state[d][ei].done[si]) startTimer(ex,si);
         else skipTimer();
-        persist();refreshDay(d);flash(d);
+        persist();refreshDay(d);autoLog(d);flash(d);
       });
+      const rin=b.querySelector('input.skr');
+      rin.addEventListener('input',e=>setReps(d,ei,si,e.target.value,e.target));
+      rin.addEventListener('click',e=>e.stopPropagation());
       const inp=b.querySelector('input');
       inp.addEventListener('input',e=>setWeight(d,ei,si,e.target.value,e.target));
       inp.addEventListener('change',e=>setWeight(d,ei,si,e.target.value,e.target));
@@ -738,16 +830,9 @@ function refreshDay(d){
 function resetDay(d){
   if(!confirm('Réinitialiser la séance ?\n\nLes poids et les progressions validées seront appliqués.'))return;
   const exos=getExos(d);
-  // ── Log séance avant reset
-  const logEntry={
-    date:new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}),
-    ts:Date.now(),dayIdx:d,dayKey:SEANCE[d].key,weekNum:currentProgWeek,
-    exoNames:exos.map(ex=>ex.name),
-    exoWeights:exos.map((ex,ei)=>[...(state[d][ei]?.weights||[])])
-  };
-  if(logEntry.exoWeights.some(ws=>ws.some(w=>w!==''))){
-    const logs=loadLogs();logs.push(logEntry);saveLogs(logs);
-  }
+  // ── Log séance avant reset (met à jour l'entrée auto-enregistrée si elle existe, sinon la crée)
+  syncSessionLog(d,true);
+  if(store.logged)store.logged[d]=null;
   exos.forEach((ex,ei)=>{
     // save weights to history
     state[d][ei]?.weights?.forEach((w,si)=>{if(w&&history[d]?.[ei])history[d][ei].weights[si]=w;});
@@ -758,7 +843,7 @@ function resetDay(d){
       store.pending[d][ei]=false;
     }
   });
-  state[d]=exos.map(ex=>({done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),note:''}));
+  state[d]=exos.map(ex=>({done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),reps:Array(ex.sets).fill(''),note:''}));
   document.querySelectorAll('[data-note]').forEach(ta=>{const p=ta.dataset.note.split('-');if(+p[0]===d){ta.value='';ta._bound=false;ar(ta);}});
   persist();
   // rebuild to reflect new targets
@@ -888,12 +973,16 @@ function playBeep(){
 }
 
 // ─── MINUTEUR DE REPOS ──────────────────────────────────────────────────────
-let timerIv=null, timerRem=0, timerTotal=0;
+let timerIv=null,timerTo=null,timerHideTo=null,timerRem=0,timerTotal=0,timerEnd=0,timerActive=false;
+const BASE_TITLE=document.title;
+function setTimerTitle(txt){document.title=txt?`${txt} · ${BASE_TITLE}`:BASE_TITLE;}
 
+// Le compte à rebours se calcule à partir d'une heure de fin (Date.now) : exact même si le navigateur
+// ralentit les timers d'un onglet caché ; rattrapage immédiat au retour sur l'onglet (visibilitychange).
 function startTimer(ex, si){
   const dur = restFor(ex);
-  clearInterval(timerIv);
-  timerTotal=dur; timerRem=dur;
+  clearInterval(timerIv);clearTimeout(timerTo);clearTimeout(timerHideTo);
+  timerTotal=dur; timerRem=dur; timerEnd=Date.now()+dur*1000; timerActive=true;
   // Déverrouille l'audio dans le geste utilisateur (clic sur la série)
   try{ if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if(audioCtx.state==='suspended') audioCtx.resume(); }catch(e){}
 
@@ -901,7 +990,7 @@ function startTimer(ex, si){
   const lbl  = document.getElementById('timer-lbl');
   const cd   = document.getElementById('timer-cd');
   const fill = document.getElementById('timer-fill');
-  if(!bar||!lbl||!cd||!fill) return;
+  if(!bar||!lbl||!cd||!fill){timerActive=false;return;}
 
   lbl.textContent = `${ex.name} · S${si+1} · ${dur/60|0}min${dur%60?dur%60+'s':''} repos`;
   cd.className = 'timer-cd';
@@ -909,34 +998,46 @@ function startTimer(ex, si){
   fill.style.width = '0%';
   bar.classList.add('visible');
 
-  function tick(){
-    if(timerRem<=0){
-      clearInterval(timerIv);
+  timerTick();
+  timerIv=setInterval(timerTick,500);
+  timerTo=setTimeout(timerTick,dur*1000+60);
+}
+function timerTick(){
+  if(!timerActive)return;
+  const bar=document.getElementById('rest-timer'),cd=document.getElementById('timer-cd'),fill=document.getElementById('timer-fill');
+  if(!bar||!cd||!fill)return;
+  timerRem=Math.max(0,Math.ceil((timerEnd-Date.now())/1000));
+  if(timerRem<=0){
+    timerActive=false;
+    clearInterval(timerIv);clearTimeout(timerTo);
+    // si on revient longtemps après la fin, inutile de biper/vibrer : l'alerte est périmée
+    if(Date.now()-timerEnd<8000){
       try{ if(navigator.vibrate) navigator.vibrate([150,80,150,80,200]); }catch(e){}
       playBeep();
-      cd.textContent='✓ Go !'; cd.className='timer-cd ok';
-      fill.style.width='100%';
-      setTimeout(()=>{ bar.classList.remove('visible'); fill.style.width='0%'; },2500);
-      return;
     }
-    const m=Math.floor(timerRem/60), s=timerRem%60;
-    cd.textContent=`${m}:${String(s).padStart(2,'0')}`;
-    cd.className = timerRem<=15 ? 'timer-cd urgent' : 'timer-cd';
-    const pct=Math.round((1-timerRem/timerTotal)*100);
-    fill.style.transition='width 1s linear';
-    fill.style.width=pct+'%';
-    fill.className = timerRem<=15 ? 'timer-fill urgent' : 'timer-fill';
-    timerRem--;
+    cd.textContent='✓ Go !'; cd.className='timer-cd ok';
+    fill.style.width='100%';
+    setTimerTitle('✓ Go !');
+    timerHideTo=setTimeout(()=>{ bar.classList.remove('visible'); fill.style.width='0%'; setTimerTitle(''); },2500);
+    return;
   }
-  tick();
-  timerIv=setInterval(tick,1000);
+  const m=Math.floor(timerRem/60), s=timerRem%60;
+  cd.textContent=`${m}:${String(s).padStart(2,'0')}`;
+  cd.className = timerRem<=15 ? 'timer-cd urgent' : 'timer-cd';
+  const pct=Math.max(0,Math.min(100,Math.round((1-timerRem/timerTotal)*100)));
+  fill.style.transition='width 1s linear';
+  fill.style.width=pct+'%';
+  fill.className = timerRem<=15 ? 'timer-fill urgent' : 'timer-fill';
+  setTimerTitle('⏱ '+cd.textContent);
 }
 function skipTimer(){
-  clearInterval(timerIv);
+  timerActive=false;
+  clearInterval(timerIv);clearTimeout(timerTo);clearTimeout(timerHideTo);
   const bar=document.getElementById('rest-timer');
   if(bar) bar.classList.remove('visible');
+  setTimerTitle('');
 }
-function addTime(s){ timerRem=Math.min(timerRem+s,timerTotal+120); }
+function addTime(sec){ if(!timerActive)return; timerEnd+=sec*1000; timerTotal+=sec; timerTick(); }
 
 // ─── SUIVI DE POIDS ─────────────────────────────────────────────────────────
 const WEIGHT_KEY='ppl_v4_weight';
@@ -1079,7 +1180,9 @@ function buildHistPage(){
       if(!ws.length)return;
       const avg=(ws.reduce((a,w)=>a+parseFloat(w),0)/ws.length).toFixed(1);
       const row=document.createElement('div');row.className='hs-exo';
-      row.innerHTML=`<div class="hs-ename">${name}</div><div class="hs-weights" style="color:${color}">${avg} kg <span style="color:var(--text3)">moy.</span></div>`;
+      const rp=(log.exoReps?.[ei]||[]).filter(r=>r!==''&&r!==undefined);
+      const rtxt=rp.length?` <span style="color:var(--text3)">· ${rp.join('/')}</span>`:'';
+      row.innerHTML=`<div class="hs-ename">${name}</div><div class="hs-weights" style="color:${color}">${avg} kg <span style="color:var(--text3)">moy.</span>${rtxt}</div>`;
       ec.appendChild(row);
     });
     ls.appendChild(card);
@@ -1383,10 +1486,7 @@ function renderFocusEx(){
   document.getElementById('focusTitle').textContent=`${SEANCE[focusDay].label} · ${focusExIdx+1}/${exos.length}`;
   document.getElementById('focusPrev').disabled=focusExIdx===0;
   document.getElementById('focusNext').disabled=focusExIdx===exos.length-1;
-  // Garantir que state[d][ei] existe
-  if(!state[d])state[d]=makeState()[d];
-  if(!state[d][ei])state[d][ei]={done:Array(ex.sets).fill(false),weights:Array(ex.sets).fill(''),note:''};
-  if(state[d][ei].done.length!==ex.sets){state[d][ei].done=Array(ex.sets).fill(false);state[d][ei].weights=Array(ex.sets).fill('');}
+  ensureSx(d,ei,ex);
   const tBadge=tgt?`<span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--push);background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:99px;padding:2px 10px;">🎯 ${tgt} kg</span>`:'';
   const rpeBadge=ex.rpe?`<span class="rpe rpe${ex.rpe}">RPE ${ex.rpe}</span>`:'';
   const tempoBadge=ex.tempo?`<span class="tempo-badge">⏱ ${ex.tempo}</span>`:'';
@@ -1396,7 +1496,8 @@ function renderFocusEx(){
     const w=state[d][ei].weights[si]||'';
     const pw=history[d]?.[ei]?.weights?.[si]||'';
     const hint=pw?`<div class="sprev">préc. ${pw}kg</div>`:(tgt?`<div class="sprev" style="color:rgba(245,158,11,.5)">cible ${tgt}kg</div>`:'<div class="sprev"></div>');
-    setsHtml+=`<div class="sb${done?' done':''}" data-fsi="${si}"><span class="slbl">S${si+1}</span><span class="sreps">${ex.reps}</span><div class="skw"><input class="sk fsk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${w}" data-fsi="${si}"><span class="sku">kg</span></div>${hint}</div>`;
+    const rv=state[d][ei].reps[si]||'',runit=/sec/.test(ex.reps)?'sec':'reps';
+    setsHtml+=`<div class="sb${done?' done':''}" data-fsi="${si}"><span class="slbl">S${si+1}</span><span class="sreps">${ex.reps}</span><div class="skw"><input class="sk fsk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${w}" data-fsi="${si}"><span class="sku">kg</span></div><div class="skw"><input class="skr fskr" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${rv}" data-fsi="${si}"><span class="sku">${runit}</span></div>${hint}</div>`;
   }
   setsHtml+='</div>';
   const fc=document.getElementById('focusContent');
@@ -1416,8 +1517,12 @@ function renderFocusEx(){
       const si=+btn.dataset.fsi;
       state[d][ei].done[si]=!state[d][ei].done[si];
       if(state[d][ei].done[si])startTimer(ex,si);else skipTimer();
-      persist();refreshDay(d);renderFocusEx();
+      persist();refreshDay(d);autoLog(d);renderFocusEx();
     });
+  });
+  fc.querySelectorAll('.fskr').forEach(inp=>{
+    inp.addEventListener('click',e=>e.stopPropagation());
+    inp.addEventListener('input',e=>setReps(d,ei,+inp.dataset.fsi,e.target.value,e.target));
   });
   fc.querySelectorAll('.fsk').forEach(inp=>{
     inp.addEventListener('click',e=>e.stopPropagation());
@@ -1587,7 +1692,7 @@ async function requestWakeLock() {
 }
 requestWakeLock();
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') requestWakeLock();
+  if (document.visibilityState === 'visible'){ requestWakeLock(); timerTick(); if(!timerActive) setTimerTitle(''); }
 });
 </script>
 </body>
