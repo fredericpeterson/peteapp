@@ -650,6 +650,23 @@ function buildExList(d){
   });
 }
 
+// Saisie d'un poids : les autres séries du même exercice suivent si elles sont vides
+// ou portent encore l'ancienne valeur. Les séries validées (done) ne sont jamais touchées.
+function setWeight(d,ei,si,val){
+  const sx=state[d][ei];if(!sx)return;
+  const old=sx.weights[si]||'';
+  sx.weights[si]=val;
+  if(val!==''){
+    // vides : toutes ; déjà remplies avec l'ancienne valeur : seulement les suivantes (une série finale plus légère ne touche pas les précédentes)
+    sx.weights.forEach((w,j)=>{if(j!==si&&!sx.done[j]&&(w===''||(j>si&&w===old)))sx.weights[j]=val;});
+  }
+  persist();
+  const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
+  if(row)row.querySelectorAll('input.sk').forEach((inp,j)=>{inp.value=sx.weights[j]||'';});
+  if(focusDay===d&&focusExIdx===ei)document.querySelectorAll('#focusContent .fsk').forEach(inp=>{inp.value=sx.weights[+inp.dataset.fsi]||'';});
+  flash(d);refreshPRBadge(d,ei);
+}
+
 function buildDay(d){
   const exos=getExos(d);
   exos.forEach((ex,ei)=>{
@@ -680,7 +697,7 @@ function buildDay(d){
         persist();refreshDay(d);flash(d);
       });
       const inp=b.querySelector('input');
-      inp.addEventListener('change',e=>{state[d][ei].weights[si]=e.target.value;persist();flash(d);refreshPRBadge(d,ei);});
+      inp.addEventListener('change',e=>setWeight(d,ei,si,e.target.value));
       inp.addEventListener('click',e=>e.stopPropagation());
       row.appendChild(b);
     }
@@ -1394,11 +1411,7 @@ function renderFocusEx(){
   });
   fc.querySelectorAll('.fsk').forEach(inp=>{
     inp.addEventListener('click',e=>e.stopPropagation());
-    inp.addEventListener('change',e=>{
-      const si=+inp.dataset.fsi;
-      state[d][ei].weights[si]=e.target.value;
-      persist();flash(d);refreshPRBadge(d,ei);
-    });
+    inp.addEventListener('change',e=>setWeight(d,ei,+inp.dataset.fsi,e.target.value));
   });
 }
 
