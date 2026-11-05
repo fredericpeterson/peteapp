@@ -103,6 +103,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .rpe8{background:rgba(245,158,11,.12);color:#fcd34d;border:1px solid rgba(245,158,11,.25);}
 .rpe9{background:rgba(251,146,60,.12);color:#fbad74;border:1px solid rgba(251,146,60,.25);}
 .tempo-badge{font-size:9px;font-weight:500;padding:2px 7px;border-radius:99px;font-family:'DM Mono',monospace;background:rgba(148,163,184,.08);color:#64748b;border:1px solid rgba(148,163,184,.15);}
+.rest-chip{font-size:9px;font-weight:500;padding:2px 8px;border-radius:99px;font-family:'DM Mono',monospace;background:rgba(165,180,252,.1);color:var(--indigo);border:1px solid rgba(99,102,241,.3);cursor:pointer;}
+.rest-chip.auto{background:none;color:var(--text3);border:1px dashed var(--border2);}
 .prog-pill{font-size:9px;font-weight:500;padding:2px 7px;border-radius:99px;font-family:'DM Mono',monospace;background:rgba(148,163,184,.08);color:#94a3b8;border:1px solid rgba(148,163,184,.15);}
 .wu-note{font-size:10px;color:rgba(245,158,11,.7);font-family:'DM Mono',monospace;margin-top:8px;padding:6px 10px;background:rgba(245,158,11,.06);border-left:2px solid rgba(245,158,11,.25);border-radius:0 var(--rs) var(--rs) 0;}
 .sr{display:flex;gap:6px;flex-wrap:wrap;}
@@ -173,6 +175,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .chart-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
 .chart-svg-wrap{width:100%;overflow:visible;position:relative;}
 .chart-svg-wrap svg{width:100%;display:block;}
+.chart-select{width:100%;background:var(--bg2);border:1px solid var(--border2);border-radius:var(--rs);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 10px;margin-bottom:12px;}
+.cstats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px;}
+.cstats>div{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rs);padding:8px 6px;text-align:center;}
+.cv{font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);}
+.cv small{font-size:9px;color:var(--text3);font-weight:400;}
+.cl{font-size:9px;color:var(--text3);margin-top:2px;}
 .chart-tooltip{position:fixed;background:var(--bg3);border:1px solid var(--border2);border-radius:6px;padding:6px 10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);pointer-events:none;z-index:200;white-space:nowrap;opacity:0;transition:opacity .15s;}
 .hist-section{margin-bottom:28px;}
 .hist-filter{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
@@ -431,7 +439,6 @@ const PROGRAM = [
     { tag:'Biceps', cls:'tbi', exos:[
       { name:'Dumbbell Incline Curl',          sub:'Biceps · Long chef · Étirement maximal',           sets:4, reps:'10–12',    bw:10, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
       { name:'EZ Barbell Curl',               sub:'Biceps · Brachial antérieur · Chef court',          sets:4, reps:'10–12',    bw:19, prog:1,   rpe:7, tempo:'3·0·1', wu:false, isNew:false },
-      { name:'Biceps Curl (haltères / câble)', sub:'Biceps · Isolation · Pic du biceps',               sets:4, reps:'12–15',    bw:11, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
     ]},
     { tag:'Core', cls:'tabd', exos:[
       { name:'Planche (gainage)',           sub:'Transverse · Core profond · Anti-extension',      sets:4, reps:'30–45 sec', bw:0, prog:0,   rpe:null,tempo:'Statique', wu:false, isNew:false },
@@ -440,11 +447,11 @@ const PROGRAM = [
   { key:'legs', label:'Legs', sublabel:'Quad · Ischio · Fessiers', groupes:[
     { tag:'Composés', cls:'tcomp', exos:[
       { name:'Leg Press 45°',               sub:'Quadriceps · Fessiers · Ischio-jambiers',         sets:5, reps:'8–10',     bw:75,  prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
+      { name:'Romanian Deadlift (RDL)',     sub:'Ischio-jambiers · Fessiers · Lombaires',          sets:4, reps:'8–10',     bw:40,  prog:2.5, rpe:7, tempo:'3·0·1', wu:true,  isNew:true },
       { name:'Leg Curl assis machine',      sub:'Ischio-jambiers · Biceps fémoral · Isolation',    sets:4, reps:'10–12',    bw:25,  prog:1,   rpe:7, tempo:'3·0·1', wu:true,  isNew:true },
     ]},
     { tag:'Isolations', cls:'tiso', exos:[
       { name:'Leg Extension machine',       sub:'Quadriceps · Isolation',                          sets:4, reps:'12–15',    bw:32.5,  prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
-      { name:'Leg Curl couché machine',     sub:'Ischio-jambiers · Biceps fémoral · Isolation',   sets:4, reps:'12–15',    bw:27.5,  prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
     ]},
     { tag:'Fessiers + Core', cls:'tfes', exos:[
       { name:'Presse à cuisses pieds hauts/écartés', sub:'Fessiers · Ischio-jambiers · Quadriceps', sets:4, reps:'10–12',    bw:70,  prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:true },
@@ -458,6 +465,16 @@ let currentProgWeek=Math.min(NUM_WEEKS,Math.max(1,parseInt(localStorage.getItem(
 function saveProgWeek(w){currentProgWeek=w;localStorage.setItem(PROG_KEY,String(w));}
 
 // Flat exo list per day
+// Poids de départ recalibrés (Récap / nouveau cycle) : appliqués à chaque chargement
+const RECALIB_KEY='ppl_v4_recalib';
+(function applyRecalib(){
+  try{
+    const r=JSON.parse(localStorage.getItem(RECALIB_KEY)||'null');if(!r)return;
+    PROGRAM.forEach(p=>p.groupes.forEach(g=>g.exos.forEach(ex=>{
+      const k=slugKey(ex.name);if(ex.bw&&r[k]>0)ex.bw=r[k];
+    })));
+  }catch(e){}
+})();
 function allExos(d){return PROGRAM[d].groupes.flatMap(g=>g.exos);}
 
 function buildSEANCE(){
@@ -498,8 +515,39 @@ try{const r=localStorage.getItem(KEY);store=r?JSON.parse(r):null;if(!store?.stat
 if(!store)store={state:makeState(),history:makeHistory(),override:makeOverride(),pending:makePending()};
 if(!store.override)store.override=makeOverride();
 if(!store.pending)store.pending=makePending();
+// ── Migration : le programme a changé (exercices déplacés / remplacés) → on réaligne
+//    state / history / override / pending sur les NOMS d'exercices, jamais sur la position.
+const PROG_NAMES=()=>PROGRAM.map((p,d)=>allExos(d).map(e=>e.name));
+const _PUSH5=['Chest Press machine (plat)','Développé incliné haltères','Pec Deck / Pec Fly Machine','Dumbbell Seated Shoulder Press','Cable Face Pull (rope)'];
+const LEGACY_LAYOUTS=[
+  {9:[..._PUSH5,'Dumbbell Incline Curl','EZ Barbell Curl','Biceps Curl (haltères / câble)','Crunch câble / machine'],
+   8:[..._PUSH5,'Cable Pushdown','Cable Reverse Grip Pushdown','Crunch câble / machine']},
+  {5:['Lat Pulldown (prise large)','Seated Row (câble)','Cable Pushdown','Cable Reverse Grip Pushdown','Planche (gainage)'],
+   6:['Lat Pulldown (prise large)','Seated Row (câble)','Dumbbell Incline Curl','EZ Barbell Curl','Biceps Curl (haltères / câble)','Planche (gainage)']},
+  {6:['Leg Press 45°','Leg Curl assis machine','Leg Extension machine','Leg Curl couché machine','Presse à cuisses pieds hauts/écartés','Ab Wheel / Relevé de jambes']}
+];
+(function migrateStore(){
+  const cur=PROG_NAMES();
+  const fresh={state:makeState(),history:makeHistory(),override:makeOverride(),pending:makePending()};
+  let changed=false;
+  cur.forEach((names,d)=>{
+    const old=(store.names&&store.names[d])||LEGACY_LAYOUTS[d]?.[store.state?.[d]?.length];
+    if(!old){ // structure inconnue : on repart propre pour ce jour plutôt que de mélanger
+      if(!store.names&&store.state?.[d]?.length===names.length)return;
+      ['state','history','override','pending'].forEach(k=>{store[k][d]=fresh[k][d];});changed=true;return;
+    }
+    if(old.length===names.length&&old.every((n,i)=>n===names[i]))return;
+    changed=true;
+    ['state','history','override','pending'].forEach(k=>{
+      const src=store[k]?.[d]||[];
+      store[k][d]=names.map((n,i)=>{const oi=old.indexOf(n);return oi>=0&&src[oi]!==undefined?src[oi]:fresh[k][d][i];});
+    });
+  });
+  store.names=cur;
+  if(changed)try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}
+})();
 let state=store.state,history=store.history;
-function persist(){store.state=state;store.history=history;try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
+function persist(){store.state=state;store.history=history;store.names=PROG_NAMES();try{localStorage.setItem(KEY,JSON.stringify(store));}catch(e){}}
 
 let cur=0;
 function goTo(i){
@@ -538,6 +586,33 @@ function buildHeaders(d){
   document.getElementById('d'+d+'t').textContent=getExos(d).reduce((a,e)=>a+e.sets,0);
 }
 
+// ─── REPOS CONFIGURABLE PAR EXERCICE ─────────────────────────────────────────
+// Auto = calcul RPE (7→100s, 8→70s, sinon 60s). Un clic sur la pastille fait défiler 60→90→120→150→180→auto.
+const REST_KEY='ppl_v4_rest', REST_STEPS=[60,90,120,150,180];
+let restPrefs={};
+try{restPrefs=JSON.parse(localStorage.getItem(REST_KEY)||'{}')||{};}catch(e){restPrefs={};}
+function defaultRest(ex){return ex.rpe===7?100:ex.rpe===8?70:60;}
+function restFor(ex){return restPrefs[ex.name]||defaultRest(ex);}
+function fmtRest(sec){return Math.floor(sec/60)+':'+String(sec%60).padStart(2,'0');}
+function restChipHtml(d,gi,ex){
+  const auto=!restPrefs[ex.name];
+  return `<button class="rest-chip${auto?' auto':''}" data-name="${ex.name}" onclick="cycleRest(${d},${gi})" title="Temps de repos — touche pour changer">⏱ repos ${fmtRest(restFor(ex))}${auto?' · auto':''}</button>`;
+}
+function cycleRest(d,gi){
+  const ex=getExos(d)[gi];if(!ex)return;
+  const cur=restPrefs[ex.name];
+  const i=cur?REST_STEPS.indexOf(cur):-1;
+  const next=i<0&&cur?REST_STEPS[0]:REST_STEPS[i+1];
+  if(next)restPrefs[ex.name]=next;else delete restPrefs[ex.name];
+  try{localStorage.setItem(REST_KEY,JSON.stringify(restPrefs));}catch(e){}
+  document.querySelectorAll('.rest-chip').forEach(b=>{
+    if(b.dataset.name!==ex.name)return;
+    const auto=!restPrefs[ex.name];
+    b.className='rest-chip'+(auto?' auto':'');
+    b.textContent=`⏱ repos ${fmtRest(restFor(ex))}${auto?' · auto':''}`;
+  });
+}
+
 const shuffleState={0:false,1:false,2:false};
 const shuffleOrder={0:null,1:null,2:null};
 function buildExList(d){
@@ -562,7 +637,7 @@ function buildExList(d){
           <div class="ei">
             <div class="ename">${ex.name}${nBadge}${tBadge}<span id="pr-${d}-${gi}" class="pr-badge" style="display:none">🏆 PR</span></div>
             <div class="esub">${ex.sub}</div>
-            <div class="etags">${rpeBadge}${tempoBadge}${progBadge}</div>
+            <div class="etags">${rpeBadge}${tempoBadge}${progBadge}${restChipHtml(d,gi,ex)}</div>
             ${wuNote}
           </div>
         </div>
@@ -789,7 +864,7 @@ function playBeep(){
 let timerIv=null, timerRem=0, timerTotal=0;
 
 function startTimer(ex, si){
-  const dur = ex.rpe===7 ? 100 : ex.rpe===8 ? 70 : 60;
+  const dur = restFor(ex);
   clearInterval(timerIv);
   timerTotal=dur; timerRem=dur;
   // Déverrouille l'audio dans le geste utilisateur (clic sur la série)
@@ -985,59 +1060,96 @@ function buildHistPage(){
   el.appendChild(ls);
 }
 
+let chartSel=null;
 function buildCharts(container,logs){
+  // exoMap : une série par exercice, une valeur (poids moyen des séries) par séance enregistrée
   const exoMap={};
   logs.forEach(log=>{
-    const color=CHART_COLORS[log.dayKey]||'#888';
     (log.exoNames||[]).forEach((name,ei)=>{
-      const ws=(log.exoWeights[ei]||[]).filter(w=>w!==''&&w!==undefined);
+      const ws=(log.exoWeights[ei]||[]).filter(w=>w!==''&&w!==undefined&&!isNaN(parseFloat(w)));
       if(!ws.length)return;
       const avg=ws.reduce((a,w)=>a+parseFloat(w),0)/ws.length;
-      if(!exoMap[name])exoMap[name]={color,points:[]};
-      exoMap[name].points.push({week:log.weekNum,avg:parseFloat(avg.toFixed(1)),date:log.date,ts:log.ts||0});
+      if(!exoMap[name])exoMap[name]={color:CHART_COLORS[log.dayKey]||'#888',points:[]};
+      exoMap[name].color=CHART_COLORS[log.dayKey]||exoMap[name].color;
+      exoMap[name].points.push({week:log.weekNum,avg:Math.round(avg*10)/10,date:log.date,ts:log.ts||0});
     });
   });
-  Object.entries(exoMap).forEach(([name,{color,points}])=>{
-    if(!points.length)return;
-    points.sort((a,b)=>(a.ts||a.week)-(b.ts||b.week));
-    // baseWeight depuis PROGRAM (champ bw)
-    let bw=null;
-    PROGRAM.forEach(p=>p.groupes.forEach(g=>g.exos.forEach(ex=>{if(ex.name===name&&ex.bw)bw=ex.bw;})));
-    const wrap=document.createElement('div');wrap.className='chart-wrap';
-    const ttl=document.createElement('div');ttl.className='chart-title';
-    ttl.innerHTML=`<span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block;flex-shrink:0;"></span>${name}`;
-    wrap.appendChild(ttl);
-    const sw=document.createElement('div');sw.className='chart-svg-wrap';
-    sw.appendChild(makeSVGChart(points,color,bw));
-    wrap.appendChild(sw);container.appendChild(wrap);
+  const progOrder=[];PROGRAM.forEach(p=>p.groupes.forEach(g=>g.exos.forEach(ex=>progOrder.push(ex.name))));
+  const names=Object.keys(exoMap).sort((a,b)=>{
+    const ia=progOrder.indexOf(a),ib=progOrder.indexOf(b);
+    return (ia<0?999:ia)-(ib<0?999:ib);
   });
+  if(!names.length){container.insertAdjacentHTML('beforeend','<div class="hist-empty" style="padding:20px">Aucun poids saisi dans les séances enregistrées.</div>');return;}
+  if(!chartSel||!exoMap[chartSel])chartSel=names.find(n=>exoMap[n].points.length>=2)||names[0];
+
+  const sel=document.createElement('select');sel.className='chart-select';sel.setAttribute('aria-label','Exercice');
+  names.forEach(n=>{const o=document.createElement('option');o.value=n;o.textContent=`${n} (${exoMap[n].points.length})`;if(n===chartSel)o.selected=true;sel.appendChild(o);});
+  container.appendChild(sel);
+  const out=document.createElement('div');container.appendChild(out);
+
+  function draw(){
+    const {color,points}=exoMap[chartSel];
+    points.sort((a,b)=>(a.ts||0)-(b.ts||0));
+    const first=points[0],last=points[points.length-1];
+    const best=Math.max(...points.map(p=>p.avg));
+    const delta=Math.round((last.avg-first.avg)*10)/10;
+    const sign=delta>0?'+':'';
+    out.innerHTML=`<div class="cstats">
+      <div><div class="cv">${first.avg}<small> kg</small></div><div class="cl">départ</div></div>
+      <div><div class="cv">${last.avg}<small> kg</small></div><div class="cl">dernière</div></div>
+      <div><div class="cv">${sign}${delta}<small> kg</small></div><div class="cl">évolution</div></div>
+      <div><div class="cv">${best}<small> kg</small></div><div class="cl">record 🏆</div></div>
+    </div>`;
+    const sw=document.createElement('div');sw.className='chart-svg-wrap';
+    sw.appendChild(makeSVGChart(points,color));
+    out.appendChild(sw);
+    if(points.length<2){out.insertAdjacentHTML('beforeend','<div style="font-size:11px;color:var(--text3);margin-top:6px">Une seule séance enregistrée — la courbe apparaît dès la deuxième.</div>');}
+  }
+  sel.onchange=()=>{chartSel=sel.value;draw();};
+  draw();
 }
 
-function makeSVGChart(points,color,baseWeight){
-  const W=320,H=110,PAD={top:12,right:16,bottom:26,left:36};
+function makeSVGChart(points,color){
+  const W=320,H=150,PAD={top:16,right:18,bottom:26,left:36};
   const cW=W-PAD.left-PAD.right,cH=H-PAD.top-PAD.bottom;
-  const targetPts=baseWeight?Array.from({length:8},(_,i)=>({week:i+1,avg:baseWeight+i})):null;
-  const allV=points.map(p=>p.avg);
-  if(targetPts)targetPts.forEach(p=>allV.push(p.avg));
-  let yMin=Math.min(...allV),yMax=Math.max(...allV);
-  const yP=Math.max((yMax-yMin)*.2,2);yMin=Math.max(0,yMin-yP);yMax+=yP;
-  const xS=w=>PAD.left+((w-1)/7)*cW;
+  const vals=points.map(p=>p.avg);
+  let yMin=Math.min(...vals),yMax=Math.max(...vals);
+  const yP=Math.max((yMax-yMin)*.25,1.5);yMin=Math.max(0,yMin-yP);yMax+=yP;
+  const t0=points[0].ts,t1=points[points.length-1].ts,span=t1-t0;
+  const xS=p=>points.length<2||span<=0?PAD.left+cW/2:PAD.left+((p.ts-t0)/span)*cW;
   const yS=v=>PAD.top+cH-((v-yMin)/(yMax-yMin))*cH;
+  const dec=(yMax-yMin)<8?1:0;
+  const shortDate=ts=>new Date(ts).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
   let grid='',yLbl='';
-  for(let i=0;i<=3;i++){const v=yMin+(yMax-yMin)*(i/3),y=yS(v);grid+=`<line x1="${PAD.left}" y1="${y.toFixed(1)}" x2="${W-PAD.right}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;yLbl+=`<text x="${PAD.left-5}" y="${(y+4).toFixed(1)}" fill="#555450" font-size="9" text-anchor="end" font-family="'DM Mono',monospace">${Math.round(v)}</text>`;}
+  for(let i=0;i<=3;i++){
+    const v=yMin+(yMax-yMin)*(i/3),y=yS(v);
+    grid+=`<line x1="${PAD.left}" y1="${y.toFixed(1)}" x2="${W-PAD.right}" y2="${y.toFixed(1)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
+    yLbl+=`<text x="${PAD.left-6}" y="${(y+3).toFixed(1)}" fill="#8a8880" font-size="9" text-anchor="end" font-family="'DM Mono',monospace">${v.toFixed(dec)}</text>`;
+  }
   let xLbl='';
-  for(let w=1;w<=8;w++)xLbl+=`<text x="${xS(w).toFixed(1)}" y="${H-PAD.bottom+14}" fill="#555450" font-size="9" text-anchor="middle" font-family="'DM Mono',monospace">S${w}</text>`;
-  const tLine=targetPts?`<path d="${targetPts.map((p,i)=>`${i===0?'M':'L'}${xS(p.week).toFixed(1)},${yS(p.avg).toFixed(1)}`).join(' ')}" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-dasharray="4,3"/>`:'';
-  const rLine=points.length>=2?`<path d="${points.map((p,i)=>`${i===0?'M':'L'}${xS(p.week).toFixed(1)},${yS(p.avg).toFixed(1)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:'';
+  if(points.length<2){
+    xLbl=`<text x="${(PAD.left+cW/2).toFixed(1)}" y="${H-6}" fill="#8a8880" font-size="9" text-anchor="middle" font-family="'DM Mono',monospace">${shortDate(t0)}</text>`;
+  }else{
+    xLbl=`<text x="${PAD.left}" y="${H-6}" fill="#8a8880" font-size="9" text-anchor="start" font-family="'DM Mono',monospace">${shortDate(t0)}</text>`
+        +`<text x="${W-PAD.right}" y="${H-6}" fill="#8a8880" font-size="9" text-anchor="end" font-family="'DM Mono',monospace">${shortDate(t1)}</text>`;
+  }
+  const line=points.length>=2?`<path d="${points.map((p,i)=>`${i===0?'M':'L'}${xS(p).toFixed(1)},${yS(p.avg).toFixed(1)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`:'';
   let marks='',hits='';
-  points.forEach(p=>{const cx=xS(p.week).toFixed(1),cy=yS(p.avg).toFixed(1);marks+=`<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="2"/>`;hits+=`<circle cx="${cx}" cy="${cy}" r="16" fill="transparent" data-label="${p.avg}kg — ${p.date} (S${p.week})" class="chart-hit"/>`;});
-  if(points.length>=1){const l=points[points.length-1];marks+=`<text x="${(xS(l.week)+6).toFixed(1)}" y="${(yS(l.avg)-4).toFixed(1)}" fill="${color}" font-size="9" font-family="'DM Mono',monospace" font-weight="500">${l.avg}kg</text>`;}
+  points.forEach(p=>{
+    const cx=xS(p).toFixed(1),cy=yS(p.avg).toFixed(1);
+    marks+=`<circle cx="${cx}" cy="${cy}" r="4" fill="${color}" stroke="var(--bg)" stroke-width="2"/>`;
+    hits+=`<circle cx="${cx}" cy="${cy}" r="16" fill="transparent" data-label="${p.avg} kg · ${p.date} · S${p.week}" class="chart-hit"/>`;
+  });
+  const l=points[points.length-1];
+  marks+=`<text x="${xS(l).toFixed(1)}" y="${(yS(l.avg)-9).toFixed(1)}" fill="var(--text)" font-size="10" text-anchor="${points.length<2?'middle':'end'}" font-family="'DM Mono',monospace" font-weight="500">${l.avg} kg</text>`;
   const NS='http://www.w3.org/2000/svg';
   const svg=document.createElementNS(NS,'svg');
   svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
   svg.setAttribute('preserveAspectRatio','xMidYMid meet');
+  svg.setAttribute('role','img');
+  svg.setAttribute('aria-label',`Progression : ${points[0].avg} kg puis ${l.avg} kg sur ${points.length} séance(s)`);
   svg.style.cssText='width:100%;max-width:520px;height:auto;overflow:visible;';
-  svg.innerHTML=`${grid}${yLbl}${xLbl}${tLine}${rLine}${marks}${hits}`;
+  svg.innerHTML=`${grid}${yLbl}${xLbl}${line}${marks}${hits}`;
   svg.querySelectorAll('.chart-hit').forEach(el=>{
     el.addEventListener('mouseenter',e=>showTip(e,el.dataset.label));
     el.addEventListener('mousemove',e=>moveTip(e));
@@ -1174,7 +1286,6 @@ function buildStreakWidget(){
 }
 
 // ─── RECALIBRATION DES POIDS ─────────────────────────────────────────────────
-const RECALIB_KEY='ppl_v4_recalib';
 function loadRecalib(){try{return JSON.parse(localStorage.getItem(RECALIB_KEY)||'null');}catch(e){return null;}}
 function saveRecalib(){
   const inputs=document.querySelectorAll('.recalib-inp');
@@ -1267,7 +1378,7 @@ function renderFocusEx(){
       <div class="et"><div class="ei">
         <div class="ename" style="font-size:16px">${ex.name}</div>
         <div class="esub">${ex.sub}</div>
-        <div class="etags" style="margin-top:6px">${rpeBadge}${tempoBadge}${tBadge}</div>
+        <div class="etags" style="margin-top:6px">${rpeBadge}${tempoBadge}${tBadge}${restChipHtml(d,ei,ex)}</div>
       </div></div>
       ${setsHtml}
     </div>`;
@@ -1325,7 +1436,7 @@ function buildExListShuffle(d){
         <div class="ei">
           <div class="ename">${ex.name}${nBadge}${tBadge}<span id="pr-${d}-${gi}" class="pr-badge" style="display:none">🏆 PR</span></div>
           <div class="esub">${ex.sub}</div>
-          <div class="etags">${rpeBadge}${tempoBadge}${progBadge}</div>
+          <div class="etags">${rpeBadge}${tempoBadge}${progBadge}${restChipHtml(d,gi,ex)}</div>
           ${wuNote}
         </div>
       </div>
@@ -1381,6 +1492,8 @@ function exportData(){
     ppl_v4_weight: localStorage.getItem('ppl_v4_weight'),
     ppl_v4_cardio: localStorage.getItem('ppl_v4_cardio'),
     ppl_v4_logs: localStorage.getItem('ppl_v4_logs'),
+    ppl_v4_recalib: localStorage.getItem('ppl_v4_recalib'),
+    ppl_v4_rest: localStorage.getItem('ppl_v4_rest'),
     exported: new Date().toISOString()
   };
   const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
@@ -1398,7 +1511,7 @@ function importData(e){
   reader.onload=ev=>{
     try{
       const data=JSON.parse(ev.target.result);
-      const keys=['ppl_v4','ppl_v4_week','ppl_v4_weight','ppl_v4_cardio','ppl_v4_logs'];
+      const keys=['ppl_v4','ppl_v4_week','ppl_v4_weight','ppl_v4_cardio','ppl_v4_logs','ppl_v4_recalib','ppl_v4_rest'];
       let count=0;
       keys.forEach(k=>{if(data[k]!=null){localStorage.setItem(k,data[k]);count++;}});
       if(count===0){alert('Fichier invalide — aucune donnée reconnue.');return;}
