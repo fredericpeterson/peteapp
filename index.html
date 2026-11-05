@@ -354,6 +354,17 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
   <div class="secl">Recalibrer les poids de départ</div>
   <div id="recalibContent"></div>
   <button class="rbtn" onclick="saveRecalib()" style="margin-top:8px;border-color:rgba(74,222,128,.3);color:var(--green)">✓ Enregistrer les poids</button>
+  <div id="systimerSection" style="display:none">
+    <div class="div"></div>
+    <div class="secl">Minuteur système · Android (expérimental)</div>
+    <div class="recalib-section">
+      <div style="font-size:11px;color:var(--text3);line-height:1.5;margin-bottom:10px;">À chaque série validée, lance aussi un minuteur dans l'horloge Android : il sonne même si l'app est fermée. Appuie sur « Tester » : si aucun minuteur de 10 s n'apparaît dans l'horloge, Android refuse et il faut laisser l'option désactivée. Les minuteurs non terminés ne sont pas annulés automatiquement.</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="rbtn" id="sysTimerBtn" onclick="toggleSysTimer()">Désactivé</button>
+        <button class="rbtn" onclick="testSysTimer()">⏱ Tester (10 s)</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="page" id="p4">
@@ -943,7 +954,7 @@ function changeWeek(delta){
 
 function updateRecap(){
   updateWkLabel();buildRecapCards();buildVol();buildWeight();
-  buildStreakWidget();buildRecalibContent();
+  buildStreakWidget();buildRecalibContent();renderSysTimerUI();
   [0,1,2].forEach(d=>{
     const exos=getExos(d),total=exos.reduce((a,e)=>a+e.sets,0);
     const done=state[d].reduce((a,s)=>a+(s.done?.filter(Boolean).length||0),0);
@@ -973,6 +984,32 @@ function playBeep(){
 }
 
 // ─── MINUTEUR DE REPOS ──────────────────────────────────────────────────────
+// ─── MINUTEUR SYSTÈME ANDROID (expérimental, désactivé par défaut) ───────────
+// Chrome ne lance par « intent: » que les activités déclarées BROWSABLE : à tester sur le téléphone.
+const SYS_TIMER_KEY='ppl_v4_systimer';
+const IS_ANDROID=/Android/i.test(navigator.userAgent);
+let sysTimerOn=false;
+try{sysTimerOn=localStorage.getItem(SYS_TIMER_KEY)==='1';}catch(e){}
+function launchSystemTimer(sec){
+  if(!IS_ANDROID)return false;
+  const a=document.createElement('a');
+  a.href=`intent:#Intent;action=android.intent.action.SET_TIMER;i.android.intent.extra.alarm.LENGTH=${Math.round(sec)};S.android.intent.extra.alarm.MESSAGE=Repos%20PPL;B.android.intent.extra.alarm.SKIP_UI=true;end`;
+  a.style.display='none';document.body.appendChild(a);a.click();a.remove();
+  return true;
+}
+function renderSysTimerUI(){
+  const sec=document.getElementById('systimerSection');if(!sec)return;
+  sec.style.display=IS_ANDROID?'block':'none';
+  const b=document.getElementById('sysTimerBtn');
+  if(b){b.textContent=sysTimerOn?'✓ Activé':'Désactivé';b.style.color=sysTimerOn?'var(--green)':'';b.style.borderColor=sysTimerOn?'rgba(74,222,128,.3)':'';}
+}
+function toggleSysTimer(){
+  sysTimerOn=!sysTimerOn;
+  try{localStorage.setItem(SYS_TIMER_KEY,sysTimerOn?'1':'0');}catch(e){}
+  renderSysTimerUI();
+}
+function testSysTimer(){launchSystemTimer(10);toast('Minuteur de 10 s demandé — vérifie dans l\'horloge');}
+
 let timerIv=null,timerTo=null,timerHideTo=null,timerRem=0,timerTotal=0,timerEnd=0,timerActive=false;
 const BASE_TITLE=document.title;
 // Titre court : un onglet de navigateur n'affiche que les premiers caractères
@@ -999,6 +1036,7 @@ function startTimer(ex, si){
   fill.style.width = '0%';
   bar.classList.add('visible');
 
+  if(sysTimerOn)launchSystemTimer(dur);
   timerTick();
   timerIv=setInterval(timerTick,500);
   timerTo=setTimeout(timerTick,dur*1000+60);
