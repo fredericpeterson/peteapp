@@ -405,7 +405,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 // tempo: concentrique · pause · excentrique (secondes)
 // wu: true = afficher note chauffe
 const PROGRAM = [
-  { key:'push', label:'Push', sublabel:'Pecs · Épaules · Biceps', groupes:[
+  { key:'push', label:'Push', sublabel:'Pecs · Épaules · Triceps', groupes:[
     { tag:'Pectoraux', cls:'tpec', exos:[
       { name:'Chest Press machine (plat)',     sub:'Pectoraux · Chef sternal · Deltoïdes ant.',        sets:5, reps:'8–10',     bw:47.5, prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
       { name:'Développé incliné haltères',     sub:'Pectoraux sup. · Deltoïdes ant. · Triceps',        sets:4, reps:'10–12',    bw:17, prog:1,   rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
@@ -415,23 +415,23 @@ const PROGRAM = [
       { name:'Dumbbell Seated Shoulder Press', sub:'Deltoïdes · Trapèzes sup. · Triceps',              sets:5, reps:'8–10',     bw:15, prog:1,   rpe:7, tempo:'2·0·2', wu:true,  isNew:true  },
       { name:'Cable Face Pull (rope)',         sub:'Deltoïdes post. · Rotateurs externes · Trapèzes',  sets:4, reps:'15–20',    bw:14, prog:1,   rpe:8, tempo:'2·0·2', wu:false, isNew:true  },
     ]},
-    { tag:'Biceps', cls:'tbi', exos:[
-      { name:'Dumbbell Incline Curl',          sub:'Biceps · Long chef · Étirement maximal',           sets:4, reps:'10–12',    bw:10, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:true  },
-      { name:'EZ Barbell Curl',               sub:'Biceps · Brachial antérieur · Chef court',          sets:4, reps:'10–12',    bw:19, prog:1,   rpe:7, tempo:'3·0·1', wu:false, isNew:true  },
-      { name:'Biceps Curl (haltères / câble)', sub:'Biceps · Isolation · Pic du biceps',               sets:4, reps:'12–15',    bw:11, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:true  },
+    { tag:'Triceps', cls:'ttri', exos:[
+      { name:'Cable Pushdown',              sub:'Triceps · Long chef · Vaste médial',              sets:4, reps:'12–15',    bw:19, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
+      { name:'Cable Reverse Grip Pushdown', sub:'Triceps · Chef médial · Vaste latéral',           sets:4, reps:'12–15',    bw:14, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
     ]},
     { tag:'Core', cls:'tabd', exos:[
       { name:'Crunch câble / machine',         sub:'Droit abdominal · Obliques · Flexion directe',     sets:4, reps:'12–15',    bw:19, prog:1,   rpe:8, tempo:'2·0·3', wu:false, isNew:false },
     ]},
   ]},
-  { key:'pull', label:'Pull', sublabel:'Dos · Triceps', groupes:[
+  { key:'pull', label:'Pull', sublabel:'Dos · Biceps', groupes:[
     { tag:'Grand dorsal', cls:'tdos', exos:[
       { name:'Lat Pulldown (prise large)',   sub:'Grand dorsal · Biceps · Rhomboïdes · Dentelé',  sets:5, reps:'8–10',     bw:42.5, prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
       { name:'Seated Row (câble)',           sub:'Grand dorsal · Trapèzes · Rhomboïdes · Biceps', sets:5, reps:'8–10',     bw:37.5, prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
     ]},
-    { tag:'Triceps', cls:'ttri', exos:[
-      { name:'Cable Pushdown',              sub:'Triceps · Long chef · Vaste médial',              sets:4, reps:'12–15',    bw:19, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:true  },
-      { name:'Cable Reverse Grip Pushdown', sub:'Triceps · Chef médial · Vaste latéral',           sets:4, reps:'12–15',    bw:14, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:true  },
+    { tag:'Biceps', cls:'tbi', exos:[
+      { name:'Dumbbell Incline Curl',          sub:'Biceps · Long chef · Étirement maximal',           sets:4, reps:'10–12',    bw:10, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
+      { name:'EZ Barbell Curl',               sub:'Biceps · Brachial antérieur · Chef court',          sets:4, reps:'10–12',    bw:19, prog:1,   rpe:7, tempo:'3·0·1', wu:false, isNew:false },
+      { name:'Biceps Curl (haltères / câble)', sub:'Biceps · Isolation · Pic du biceps',               sets:4, reps:'12–15',    bw:11, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
     ]},
     { tag:'Core', cls:'tabd', exos:[
       { name:'Planche (gainage)',           sub:'Transverse · Core profond · Anti-extension',      sets:4, reps:'30–45 sec', bw:0, prog:0,   rpe:null,tempo:'Statique', wu:false, isNew:false },
