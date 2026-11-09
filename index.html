@@ -122,6 +122,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 .prog-btn{margin-top:10px;}
 .prog-confirm{width:100%;background:none;border:1px dashed var(--border2);border-radius:var(--rs);color:var(--text3);font-family:'DM Mono',monospace;font-size:10px;padding:8px 10px;cursor:pointer;transition:all .2s;text-align:center;letter-spacing:.02em;}
 .skr{border:none;border-bottom:1px solid var(--border2);background:transparent;font-size:11px;font-weight:500;width:36px;text-align:center;color:var(--text);outline:none;padding:1px 0;font-family:'DM Mono',monospace;}
+.skr::placeholder{color:var(--text3);font-size:9px;}
+.rchips{display:flex;gap:4px;justify-content:center;margin:4px 0 3px;}
+.rch{min-width:30px;padding:5px 0;border:1px solid var(--border2);border-radius:var(--rs);background:none;color:var(--text2);font-family:'DM Mono',monospace;font-size:11px;font-weight:500;cursor:pointer;line-height:1;}
+.rch.on{background:rgba(74,222,128,.16);border-color:rgba(74,222,128,.55);color:var(--green);}
 .skr::placeholder{color:var(--text3);}.skr:focus{border-bottom-color:var(--text2);}
 .sk::-webkit-inner-spin-button,.sk::-webkit-outer-spin-button,.skr::-webkit-inner-spin-button,.skr::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
 .sk,.skr{-moz-appearance:textfield;appearance:textfield;}
@@ -715,6 +719,29 @@ function setWeight(d,ei,si,val,src){
   autoLog(d);flash(d);refreshPRBadge(d,ei);
 }
 
+// Reps par série : deux boutons (bas / haut de la fourchette) + champ « autre » pour une valeur hors fourchette
+function repsCtl(ex,rv,si,extraCls){
+  const rr=repRange(ex.reps),sec=/sec/.test(ex.reps),v=String(rv||'');
+  const isB=!!rr&&(v===String(rr.min)||v===String(rr.max));
+  const chips=rr?`<div class="rchips">${[rr.min,rr.max].map(x=>`<button type="button" class="rch${v===String(x)?' on':''}" data-si="${si}" data-v="${x}">${x}${sec?'s':''}</button>`).join('')}</div>`:'';
+  return chips+`<div class="skw"><input class="skr${extraCls||''}" type="number" inputmode="numeric" min="0" step="1" placeholder="${rr?'autre':'—'}" value="${isB?'':v}" data-fsi="${si}">${rr?'':`<span class="sku">${sec?'sec':'reps'}</span>`}</div>`;
+}
+function pickReps(d,ei,si,v){
+  const sx=state[d][ei];if(!sx)return;
+  setReps(d,ei,si,String(sx.reps[si]||'')===String(v)?'':String(v),null);
+}
+function syncRepsUI(d,ei,src){
+  const sx=state[d][ei],ex=getExos(d)[ei],rr=ex&&repRange(ex.reps);
+  const isB=v=>!!rr&&(String(v)===String(rr.min)||String(v)===String(rr.max));
+  const apply=(root,sel)=>{
+    if(!root)return;
+    root.querySelectorAll('.rch').forEach(c=>c.classList.toggle('on',String(sx.reps[+c.dataset.si]||'')===c.dataset.v));
+    root.querySelectorAll(sel).forEach((inp,j)=>{if(inp===src)return;const v=sx.reps[j]||'';inp.value=isB(v)?'':v;});
+  };
+  apply(document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`),'input.skr');
+  if(focusDay===d&&focusExIdx===ei)apply(document.getElementById('focusContent'),'.fskr');
+}
+
 // Garantit state[d][ei] (désync localStorage, déload, anciennes versions sans reps)
 function ensureSx(d,ei,ex){
   if(!state[d])state[d]=makeState()[d];
@@ -775,9 +802,7 @@ function setReps(d,ei,si,val,src){
   if(!sx.reps)sx.reps=[];
   sx.reps[si]=val;
   persist();
-  const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
-  if(row)row.querySelectorAll('input.skr').forEach((inp,j)=>{if(inp!==src)inp.value=sx.reps[j]||'';});
-  if(focusDay===d&&focusExIdx===ei)document.querySelectorAll('#focusContent .fskr').forEach(inp=>{if(inp!==src)inp.value=sx.reps[+inp.dataset.fsi]||'';});
+  syncRepsUI(d,ei,src);
   const pgb=document.getElementById(`pgb-${d}-${ei}`);if(pgb)renderProgBtn(pgb,d,ei);
   autoLog(d);flash(d);
 }
@@ -796,8 +821,7 @@ function buildDay(d){
       const hint=pw
         ?`<div class="sprev">préc. ${pw}kg</div>`
         :(tgt?`<div class="sprev" style="color:rgba(245,158,11,.5)">cible ${tgt}kg</div>`:'<div class="sprev"></div>');
-      const rv=state[d][ei].reps[si]||'',runit=/sec/.test(ex.reps)?'sec':'reps';
-      b.innerHTML=`<span class="slbl">Série ${si+1}</span><span class="sreps">${ex.reps}</span><div class="skw"><input class="sk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${state[d][ei].weights[si]||''}"><span class="sku">kg</span></div><div class="skw"><input class="skr" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${rv}"><span class="sku">${runit}</span></div>${hint}`;
+      b.innerHTML=`<span class="slbl">Série ${si+1}</span>${repRange(ex.reps)?'':`<span class="sreps">${ex.reps}</span>`}<div class="skw"><input class="sk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${state[d][ei].weights[si]||''}"><span class="sku">kg</span></div>${repsCtl(ex,state[d][ei].reps[si],si,'')}${hint}`;
       b.addEventListener('click',function(e){
         if(e.target.tagName==='INPUT')return;
         state[d][ei].done[si]=!state[d][ei].done[si];
@@ -808,6 +832,7 @@ function buildDay(d){
       const rin=b.querySelector('input.skr');
       rin.addEventListener('input',e=>setReps(d,ei,si,e.target.value,e.target));
       rin.addEventListener('click',e=>e.stopPropagation());
+      b.querySelectorAll('.rch').forEach(c=>c.addEventListener('click',e=>{e.stopPropagation();pickReps(d,ei,si,c.dataset.v);}));
       const inp=b.querySelector('input');
       inp.addEventListener('input',e=>setWeight(d,ei,si,e.target.value,e.target));
       inp.addEventListener('change',e=>setWeight(d,ei,si,e.target.value,e.target));
@@ -1535,8 +1560,7 @@ function renderFocusEx(){
     const w=state[d][ei].weights[si]||'';
     const pw=history[d]?.[ei]?.weights?.[si]||'';
     const hint=pw?`<div class="sprev">préc. ${pw}kg</div>`:(tgt?`<div class="sprev" style="color:rgba(245,158,11,.5)">cible ${tgt}kg</div>`:'<div class="sprev"></div>');
-    const rv=state[d][ei].reps[si]||'',runit=/sec/.test(ex.reps)?'sec':'reps';
-    setsHtml+=`<div class="sb${done?' done':''}" data-fsi="${si}"><span class="slbl">S${si+1}</span><span class="sreps">${ex.reps}</span><div class="skw"><input class="sk fsk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${w}" data-fsi="${si}"><span class="sku">kg</span></div><div class="skw"><input class="skr fskr" type="number" inputmode="numeric" min="0" step="1" placeholder="—" value="${rv}" data-fsi="${si}"><span class="sku">${runit}</span></div>${hint}</div>`;
+    setsHtml+=`<div class="sb${done?' done':''}" data-fsi="${si}"><span class="slbl">S${si+1}</span>${repRange(ex.reps)?'':`<span class="sreps">${ex.reps}</span>`}<div class="skw"><input class="sk fsk" type="number" min="0" step="0.5" placeholder="${tgt||'—'}" value="${w}" data-fsi="${si}"><span class="sku">kg</span></div>${repsCtl(ex,state[d][ei].reps[si],si,' fskr')}${hint}</div>`;
   }
   setsHtml+='</div>';
   const fc=document.getElementById('focusContent');
@@ -1559,6 +1583,7 @@ function renderFocusEx(){
       persist();refreshDay(d);autoLog(d);renderFocusEx();
     });
   });
+  fc.querySelectorAll('.rch').forEach(c=>c.addEventListener('click',e=>{e.stopPropagation();pickReps(d,ei,+c.dataset.si,c.dataset.v);}));
   fc.querySelectorAll('.fskr').forEach(inp=>{
     inp.addEventListener('click',e=>e.stopPropagation());
     inp.addEventListener('input',e=>setReps(d,ei,+inp.dataset.fsi,e.target.value,e.target));
