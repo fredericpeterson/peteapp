@@ -695,33 +695,36 @@ function buildExList(d){
 // Saisie d'un poids : les autres séries du même exercice suivent si elles sont vides
 // ou portent encore l'ancienne valeur. Les séries validées (done) ne sont jamais touchées.
 const _lastProp={};
-// _auto : valeur écrite automatiquement par la propagation + série d'origine {val,src} (clé jour-exo-série). Une série ainsi
-// remplie n'a pas été saisie à la main : elle continue de suivre SA série d'origine (ex. « 5 » puis « 50 »), même validée.
+// _auto : valeur écrite automatiquement par la propagation + série d'origine {val,src} (clé champ-jour-exo-série). Une série
+// ainsi remplie n'a pas été saisie à la main : elle continue de suivre SA série d'origine (ex. « 5 » puis « 50 »), même validée.
 const _auto={};
-function setWeight(d,ei,si,val,src){
-  const sx=state[d][ei];if(!sx)return;
-  const k=j=>d+'-'+ei+'-'+j;
+// Propagation commune aux poids ('weights') et aux reps ('reps') d'un exercice.
+function propagate(sx,arr,ns,d,ei,si,val){
+  const A=sx[arr],k=j=>ns+d+'-'+ei+'-'+j;
   // « ancienne valeur » : celle d'avant la frappe, ou la dernière valeur non vide si on a effacé la case pour retaper
-  const before=sx.weights[si]||'';
+  const before=A[si]||'';
   const old=before||_lastProp[k(si)]||'';
-  sx.weights[si]=val;
-  delete _auto[k(si)];                 // ce que l'utilisateur tape lui-même n'est jamais « auto »
+  A[si]=val;
+  delete _auto[k(si)];                 // ce que l'utilisateur choisit lui-même n'est jamais « auto »
   if(val===''){
     // suppression : les séries suivantes qui portaient la même valeur sont vidées aussi
-    if(before!=='')sx.weights.forEach((w,j)=>{const a=_auto[k(j)];if(j>si&&w===before&&(!sx.done[j]||(a&&a.src===si&&a.val===w))){sx.weights[j]='';delete _auto[k(j)];}});
+    if(before!=='')A.forEach((w,j)=>{const a=_auto[k(j)];if(j>si&&w===before&&(!sx.done[j]||(a&&a.src===si&&a.val===w))){A[j]='';delete _auto[k(j)];}});
   }else{
     _lastProp[k(si)]=val;
-    // vides (même validées : on saisit souvent le poids après la série) → toutes ;
+    // vides (même validées : on saisit souvent après la série) → toutes ;
     // remplies par la propagation, ou non validées avec l'ancienne valeur → seulement les suivantes
-    // (une série finale plus légère ne touche pas les précédentes) ; validée avec un poids saisi à la main → jamais touchée
-    sx.weights.forEach((w,j)=>{
+    // (une série finale plus légère ne touche pas les précédentes) ; validée avec une valeur saisie à la main → jamais touchée
+    A.forEach((w,j)=>{
       if(j===si)return;
-      const empty=(w===''||w===undefined);
-      const a=_auto[k(j)];
+      const empty=(w===''||w===undefined),a=_auto[k(j)];
       // auto : suit sa série d'origine, ou passe sous la dernière série saisie à la main (qui devient sa nouvelle origine)
-      if(empty||(j>si&&((a&&a.val===w&&(a.src===si||w===old))||(!sx.done[j]&&w===old)))){sx.weights[j]=val;_auto[k(j)]={val,src:si};_lastProp[k(j)]=val;}
+      if(empty||(j>si&&((a&&a.val===w&&(a.src===si||w===old))||(!sx.done[j]&&w===old)))){A[j]=val;_auto[k(j)]={val,src:si};_lastProp[k(j)]=val;}
     });
   }
+}
+function setWeight(d,ei,si,val,src){
+  const sx=state[d][ei];if(!sx)return;
+  propagate(sx,'weights','w',d,ei,si,val);
   persist();
   const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
   // on réécrit tous les champs sauf celui qu'on est en train de taper (sinon « 52. » perd son point)
@@ -740,7 +743,11 @@ function repsCtl(ex,rv,si,extraCls){
 }
 function pickReps(d,ei,si,v){
   const sx=state[d][ei];if(!sx)return;
-  setReps(d,ei,si,String(sx.reps[si]||'')===String(v)?'':String(v),null);
+  const same=String(sx.reps[si]||'')===String(v),key='r'+d+'-'+ei+'-'+si;
+  // Bouton déjà actif parce que rempli automatiquement : le toucher le CONFIRME (il devient une saisie à part entière)
+  // au lieu de l'annuler. Sur une valeur choisie à la main, un 2e tap annule (et vide les séries qu'elle avait remplies).
+  if(same&&_auto[key]){delete _auto[key];return;}
+  setReps(d,ei,si,same?'':String(v),null,true);
 }
 function syncRepsUI(d,ei,src){
   const sx=state[d][ei],ex=getExos(d)[ei],rr=ex&&repRange(ex.reps);
@@ -808,11 +815,12 @@ function toast(msg){
   t.textContent=msg;t.classList.add('show');clearTimeout(_toastTo);_toastTo=setTimeout(()=>t.classList.remove('show'),2600);
 }
 
-// Reps réalisées (pas de propagation : elles baissent naturellement avec la fatigue)
-function setReps(d,ei,si,val,src){
+// Reps réalisées : les boutons 8 / 10 se propagent aux autres séries (comme les poids) ; le champ « autre » reste ponctuel
+function setReps(d,ei,si,val,src,spread){
   const sx=state[d][ei];if(!sx)return;
   if(!sx.reps)sx.reps=[];
-  sx.reps[si]=val;
+  if(spread)propagate(sx,'reps','r',d,ei,si,val);   // boutons 8 / 10 : les autres séries suivent
+  else{sx.reps[si]=val;delete _auto['r'+d+'-'+ei+'-'+si];} // champ « autre » : valeur ponctuelle, pas de propagation
   persist();
   syncRepsUI(d,ei,src);
   const pgb=document.getElementById(`pgb-${d}-${ei}`);if(pgb)renderProgBtn(pgb,d,ei);
