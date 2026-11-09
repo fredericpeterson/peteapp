@@ -695,20 +695,32 @@ function buildExList(d){
 // Saisie d'un poids : les autres séries du même exercice suivent si elles sont vides
 // ou portent encore l'ancienne valeur. Les séries validées (done) ne sont jamais touchées.
 const _lastProp={};
+// _auto : valeur écrite automatiquement par la propagation + série d'origine {val,src} (clé jour-exo-série). Une série ainsi
+// remplie n'a pas été saisie à la main : elle continue de suivre SA série d'origine (ex. « 5 » puis « 50 »), même validée.
+const _auto={};
 function setWeight(d,ei,si,val,src){
   const sx=state[d][ei];if(!sx)return;
-  const key=d+'-'+ei+'-'+si;
+  const k=j=>d+'-'+ei+'-'+j;
   // « ancienne valeur » : celle d'avant la frappe, ou la dernière valeur non vide si on a effacé la case pour retaper
   const before=sx.weights[si]||'';
-  const old=before||_lastProp[key]||'';
+  const old=before||_lastProp[k(si)]||'';
   sx.weights[si]=val;
+  delete _auto[k(si)];                 // ce que l'utilisateur tape lui-même n'est jamais « auto »
   if(val===''){
     // suppression : les séries suivantes qui portaient la même valeur sont vidées aussi
-    if(before!=='')sx.weights.forEach((w,j)=>{if(j>si&&!sx.done[j]&&w===before)sx.weights[j]='';});
+    if(before!=='')sx.weights.forEach((w,j)=>{const a=_auto[k(j)];if(j>si&&w===before&&(!sx.done[j]||(a&&a.src===si&&a.val===w))){sx.weights[j]='';delete _auto[k(j)];}});
   }else{
-    _lastProp[key]=val;
-    // vides : toutes ; déjà remplies avec l'ancienne valeur : seulement les suivantes (une série finale plus légère ne touche pas les précédentes)
-    sx.weights.forEach((w,j)=>{if(j!==si&&!sx.done[j]&&(w===''||(j>si&&w===old)))sx.weights[j]=val;});
+    _lastProp[k(si)]=val;
+    // vides (même validées : on saisit souvent le poids après la série) → toutes ;
+    // remplies par la propagation, ou non validées avec l'ancienne valeur → seulement les suivantes
+    // (une série finale plus légère ne touche pas les précédentes) ; validée avec un poids saisi à la main → jamais touchée
+    sx.weights.forEach((w,j)=>{
+      if(j===si)return;
+      const empty=(w===''||w===undefined);
+      const a=_auto[k(j)];
+      // auto : suit sa série d'origine, ou passe sous la dernière série saisie à la main (qui devient sa nouvelle origine)
+      if(empty||(j>si&&((a&&a.val===w&&(a.src===si||w===old))||(!sx.done[j]&&w===old)))){sx.weights[j]=val;_auto[k(j)]={val,src:si};_lastProp[k(j)]=val;}
+    });
   }
   persist();
   const row=document.querySelector(`.sr[data-day="${d}"][data-ex="${ei}"]`);
