@@ -454,7 +454,7 @@ const PROGRAM = [
       { name:'Cable Reverse Grip Pushdown', sub:'Triceps · Chef médial · Vaste latéral',           sets:4, reps:'12–15',    bw:14, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
     ]},
     { tag:'Core', cls:'tabd', exos:[
-      { name:'Crunch câble / machine',         sub:'Droit abdominal · Obliques · Flexion directe',     sets:4, reps:'12–15',    bw:19, prog:1,   rpe:8, tempo:'2·0·3', wu:false, isNew:false },
+      { name:"Captain's Chair Leg Raise", sub:'Abdominaux bas · Fléchisseurs de hanches · Core', sets:4, reps:'12–15', bw:0, prog:0, rpe:8, tempo:'2·0·3', wu:false, isNew:true },
     ]},
   ]},
   { key:'pull', label:'Pull', sublabel:'Dos · Biceps', groupes:[
@@ -467,7 +467,7 @@ const PROGRAM = [
       { name:'EZ Barbell Curl',               sub:'Biceps · Brachial antérieur · Chef court',          sets:4, reps:'10–12',    bw:19, prog:1,   rpe:7, tempo:'3·0·1', wu:false, isNew:false },
     ]},
     { tag:'Core', cls:'tabd', exos:[
-      { name:'Planche (gainage)',           sub:'Transverse · Core profond · Anti-extension',      sets:4, reps:'30–45 sec', bw:0, prog:0,   rpe:null,tempo:'Statique', wu:false, isNew:false },
+      { name:"Captain's Chair Leg Raise", sub:'Abdominaux bas · Fléchisseurs de hanches · Core', sets:4, reps:'12–15', bw:0, prog:0, rpe:8, tempo:'2·0·3', wu:false, isNew:true },
     ]},
   ]},
   { key:'legs', label:'Legs', sublabel:'Quad · Ischio · Fessiers', groupes:[
@@ -481,7 +481,7 @@ const PROGRAM = [
     ]},
     { tag:'Fessiers + Core', cls:'tfes', exos:[
       { name:'Presse à cuisses pieds hauts/écartés', sub:'Fessiers · Ischio-jambiers · Quadriceps', sets:4, reps:'10–12',    bw:70,  prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:true },
-      { name:'Ab Wheel / Relevé de jambes', sub:'Core complet · Droit abdominal · Transverse',    sets:4, reps:'12–15',    bw:0,   prog:0,   rpe:8, tempo:'2·0·3', wu:false, isNew:false },
+      { name:"Captain's Chair Leg Raise", sub:'Abdominaux bas · Fléchisseurs de hanches · Core', sets:4, reps:'12–15', bw:0, prog:0, rpe:8, tempo:'2·0·3', wu:false, isNew:true },
     ]},
   ]},
 ];
@@ -920,7 +920,7 @@ function getMuscles(n){
   if(n.includes('élévations latérales'))return['Épaules'];
   if(n.includes('lat pulldown'))return['Grand dorsal','Biceps'];
   if(n.includes('curl'))return['Biceps'];
-  if(n.includes('ab wheel')||n.includes('relevé'))return['Core'];
+  if(n.includes('captain')||n.includes('leg raise')||n.includes('ab wheel')||n.includes('relevé'))return['Core'];
   if(n.includes('crunch'))return['Core'];
   if(n.includes('planche'))return['Core'];
   if(n.includes('face pull'))return['Épaules','Trapèzes'];
