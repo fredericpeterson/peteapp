@@ -443,8 +443,8 @@ const PROGRAM = [
     { tag:'Pectoraux', cls:'tpec', exos:[
       { name:'Chest Press machine (plat)',     sub:'Pectoraux · Chef sternal · Deltoïdes ant.',        sets:5, reps:'8–10',     bw:47.5, prog:2.5, rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
       { name:'Développé incliné haltères',     sub:'Pectoraux sup. · Deltoïdes ant. · Triceps',        sets:4, reps:'10–12',    bw:17, prog:1,   rpe:7, tempo:'2·0·2', wu:true,  isNew:false },
+      { name:'Dips (penché en avant)', sub:'Pectoraux inf. · Triceps · Deltoïdes ant.', sets:3, reps:'8–12',     bw:0, prog:0, rpe:8, tempo:'3·0·1', wu:false, isNew:true  },
       { name:'Pec Deck / Pec Fly Machine',     sub:'Pectoraux · Isolation chef sternal',               sets:4, reps:'12–15',    bw:42.5, prog:1,   rpe:8, tempo:'3·0·1', wu:false, isNew:false },
-      { name:'Cable Crossover (poulie haute → basse)', sub:'Pectoraux inf. · Chef sternal bas · Adduction', sets:3, reps:'12–15',    bw:10, prog:0.5, rpe:8, tempo:'2·1·2', wu:false, isNew:true  },
     ]},
     { tag:'Épaules', cls:'tepa', exos:[
       { name:'Dumbbell Seated Shoulder Press', sub:'Deltoïdes · Trapèzes sup. · Triceps',              sets:5, reps:'8–10',     bw:15, prog:1,   rpe:7, tempo:'2·0·2', wu:true,  isNew:true  },
@@ -925,7 +925,8 @@ function getMuscles(n){
   if(n.includes('crunch'))return['Core'];
   if(n.includes('planche'))return['Core'];
   if(n.includes('face pull'))return['Épaules','Trapèzes'];
-  if(n.includes('pec deck')||n.includes('pec fly')||n.includes('crossover'))return['Pectoraux'];
+  if(n.includes('pec deck')||n.includes('pec fly'))return['Pectoraux'];
+  if(n.includes('dips'))return['Pectoraux','Triceps','Épaules'];
   if(n.includes('triceps')||n.includes('pushdown'))return['Triceps'];
   return[];
 }
